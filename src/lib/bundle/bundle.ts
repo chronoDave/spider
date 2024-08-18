@@ -1,5 +1,6 @@
 import fsp from 'fs/promises';
 import path from 'path';
+import toAbsolute from '../toAbsolute';
 
 import write from '../write/write';
 
@@ -14,11 +15,7 @@ export type Bundle = {
 };
 
 export default async (options: BundleOptions): Promise<Bundle> => {
-  const root = path.isAbsolute(options.root) ?
-    options.root :
-    path.join(process.cwd(), options.root);
-
-  const entries = await fsp.readdir(root, { recursive: true })
+  const entries = await fsp.readdir(toAbsolute(options.root), { recursive: true })
     .then(files => files.reduce<string[]>((acc, cur) => {
       if (options.pattern.test(cur)) acc.push(path.join(options.root, cur));
       return acc;
