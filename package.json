@@ -25,6 +25,7 @@
   },
   "scripts": {
     "lint": "eslint src",
+    "build": "rollup -c",
     "test": "node scripts/tape.js && tape build/**/*.spec.js"
   },
   "devDependencies": {
