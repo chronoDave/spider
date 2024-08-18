@@ -9,7 +9,7 @@ test('[bundle] writes files', async t => {
 
   await bundle({
     root: ASSETS,
-    pattern: '**/*.js',
+    pattern: /\.js$/,
     dirout: ROOT
   });
 
@@ -26,7 +26,7 @@ test('[bundle] returns redirects', async t => {
 
   const { redirects } = await bundle({
     root: ASSETS,
-    pattern: '**/*.js',
+    pattern: /\.js$/,
     dirout: ROOT
   });
 

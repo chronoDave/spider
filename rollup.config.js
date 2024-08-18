@@ -12,7 +12,6 @@ export default [{
     })
   ],
   external: [
-    'fast-glob',
     'path',
     'fs/promises'
   ],

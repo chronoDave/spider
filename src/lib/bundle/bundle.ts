@@ -1,4 +1,4 @@
-import glob from 'fast-glob';
+import fsp from 'fs/promises';
 import path from 'path';
 
 import write from '../write/write';
@@ -6,7 +6,7 @@ import write from '../write/write';
 export type BundleOptions = {
   root: string;
   dirout: string;
-  pattern: string;
+  pattern: RegExp;
 };
 
 export type Bundle = {
@@ -14,9 +14,14 @@ export type Bundle = {
 };
 
 export default async (options: BundleOptions): Promise<Bundle> => {
-  const entrypoints = await glob(options.pattern, { cwd: options.root, absolute: true });
-  const files = await Promise.all(entrypoints.map(entrypoint => write({
-    file: entrypoint,
+  const entries = await fsp.readdir(options.root, { recursive: true })
+    .then(files => files.reduce<string[]>((acc, cur) => {
+      if (options.pattern.test(cur)) acc.push(path.join(options.root, cur));
+      return acc;
+    }, []));
+  
+  const files = await Promise.all(entries.map(entry => write({
+    file: entry,
     dirout: options.dirout
   })));
 
