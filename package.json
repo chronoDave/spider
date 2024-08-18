@@ -26,7 +26,8 @@
   "scripts": {
     "lint": "eslint src",
     "build": "rollup -c",
-    "test": "node scripts/tape.js && tape build/**/*.spec.js"
+    "test": "node scripts/tape.js && tape build/**/*.spec.js",
+    "prepublishOnly": "npm run lint && npm run test && npm run build"
   },
   "devDependencies": {
     "@chronocide/eslint-config": "github:chronoDave/eslint-config",
