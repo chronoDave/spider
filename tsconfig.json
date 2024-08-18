@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "lib": ["ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+
+    "strict": true,
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    "declaration": true,
+    "outDir": "./test/build"
+  },
+  "include": [
+    "src",
+    "test",
+    "scripts",
+    "eslint.config.js",
+    "rollup.config.js"
+  ]
+}

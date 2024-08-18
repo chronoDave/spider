@@ -1,0 +1,38 @@
+{
+  "name": "@chronocide/spider",
+  "version": "0.0.1",
+  "description": "Static HTML generator",
+  "type": "module",
+  "types": "dist/spider.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./dist/spider.js",
+      "require": "./dist/spider.cjs"
+    }
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chronoDave/spider.git"
+  },
+  "author": "Chronocide",
+  "license": "GPL-3.0",
+  "engines": {
+    "node": ">=20.16.0"
+  },
+  "scripts": {},
+  "devDependencies": {
+    "@chronocide/eslint-config": "github:chronoDave/eslint-config",
+    "@types/tape": "^5.6.4",
+    "esbuild": "^0.23.1",
+    "eslint": "^9.9.0",
+    "rollup": "^4.21.0",
+    "rollup-plugin-dts": "^6.1.1",
+    "rollup-plugin-esbuild": "^6.1.1",
+    "tape": "^5.8.1",
+    "typescript": "^5.5.4"
+  }
+}
