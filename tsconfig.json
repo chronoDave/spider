@@ -3,7 +3,7 @@
     "target": "ES6",
     "lib": ["ESNext"],
     "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "Node",
 
     "strict": true,
     "noImplicitAny": true,
