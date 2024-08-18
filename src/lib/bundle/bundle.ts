@@ -14,7 +14,11 @@ export type Bundle = {
 };
 
 export default async (options: BundleOptions): Promise<Bundle> => {
-  const entries = await fsp.readdir(path.join(process.cwd(), options.root), { recursive: true })
+  const root = path.isAbsolute(options.root) ?
+    options.root :
+    path.join(process.cwd(), options.root);
+
+  const entries = await fsp.readdir(root, { recursive: true })
     .then(files => files.reduce<string[]>((acc, cur) => {
       if (options.pattern.test(cur)) acc.push(path.join(options.root, cur));
       return acc;
