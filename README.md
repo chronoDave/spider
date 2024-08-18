@@ -10,8 +10,8 @@
   <a href="https://www.npmjs.com/package/@chronocide/spider">
     <img alt="NPM" src="https://img.shields.io/npm/v/@chronocide/spider?label=npm">
   </a>
-  <a href="https://bundlephobia.com/result?p=@chronocide/spider@latest">
-    <img alt="Bundle size" src="https://img.shields.io/bundlephobia/minzip/@chronocide/spider@latest.svg">
+  <a href="https://packagephobia.com/result?p=@chronocide/spider">
+    <img alt="Bundle size" src="https://packagephobia.com/badge?p=@chronocide/spider">
   </a>
 </div>
 
