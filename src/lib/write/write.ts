@@ -6,17 +6,27 @@ export type Meta = {
   redirects?: string[];
 };
 
-export default async (file: string, outdir: string): Promise<{ file: string; redirects: string[] }> => {
-  const { meta, html }: { meta: Meta; html: string } = await import(`file://${file}`);
+export type WriteOptions = {
+  file: string;
+  dirout: string;
+};
 
-  const root = path.join(outdir, meta.url);
-  const out = path.join(root, 'index.html');
+export type File = {
+  path: string;
+  redirects?: string[];
+};
+
+export default async (options: WriteOptions): Promise<File> => {
+  const { meta, html }: { meta: Meta; html: string } = await import(`file://${options.file}`);
+
+  const root = path.join(options.dirout, meta.url);
+  const file = path.join(root, 'index.html');
 
   await fsp.mkdir(root, { recursive: true });
-  await fsp.writeFile(out, html, 'utf-8');
+  await fsp.writeFile(file, html, 'utf-8');
 
   return {
-    file: out,
+    path: file,
     redirects: meta.redirects ?? []
   };
 };

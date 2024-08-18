@@ -12,7 +12,8 @@ build({
   }),
   bundle: true,
   external: [
-    'tape'
+    'tape',
+    'fast-glob'
   ],
   platform: 'node',
   format: 'esm',
