@@ -13,6 +13,7 @@ export default [{
   ],
   external: [
     'path',
+    'fs',
     'fs/promises'
   ],
   output: [{
