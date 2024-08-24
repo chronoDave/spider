@@ -13,7 +13,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/chronoDave/spider.git"
+    "url": "git+https://github.com/chronoDave/spider.git"
   },
   "author": "Chronocide",
   "license": "GPL-3.0",
