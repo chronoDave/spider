@@ -27,3 +27,16 @@ test('[is.string] validates string', t => {
   
   t.end();
 });
+
+test('[is.url] validates url', t => {
+  t.true(is.url('/'), 'root');
+  t.true(is.url('/about'), 'single');
+  t.true(is.url('/about/me'), 'nested');
+
+  t.false(is.url('-'), 'not slash');
+  t.false(is.url('-/'), 'not start with slash');
+  t.false(is.url('/ about'), 'space');
+  t.false(is.url('/about/'), 'ends with slash');
+
+  t.end();
+});

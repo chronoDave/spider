@@ -21,8 +21,8 @@ export const read = async (url: string): Promise<Meta> => {
     throw new Error('Invalid type `url`, expected `string`');
   }
 
-  if (!/^(\/$|(\/\S+)+\w$)/u.test(raw.url)) {
-    throw new Error('Invalid type `url`, expected `/^(\/$|(\/\S+)+\w$)/u`');
+  if (!is.url(raw.url)) {
+    throw new Error('Invalid `url`, expected valid url');
   }
 
   if (Array.isArray(raw.redirects) && !raw.redirects.every(is.string)) {
