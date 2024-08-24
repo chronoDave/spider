@@ -1,48 +1,47 @@
-import fs from 'fs';
 import path from 'path';
 
-import { read } from './meta';
+import * as is from './is';
 
-export type BundleOptions = {
-  /** Page file name, defaults to `<meta.name>` */
-  name?: string;
-  /** Page file extension, defaults to `js` */
-  ext?: string;
+export type Page = {
+  url: string;
+  html: string;
+  redirects?: string[];
 };
 
 export type BundleResult = {
-  redirects: string[] | null;
-  /** Absolute page path */
-  in: string;
-  /** Relative output path */
-  out: string;
+  redirects: string[];
+  path: string;
+  html: string;
 };
 
-/**
- * Create bundle
- * @param url - Absolute file path
- * */
-export const bundle = async (url: string, options?: BundleOptions): Promise<BundleResult> => {
-  const { name, dir } = path.parse(url);
-  const page = path.format({
-    dir,
-    name: options?.name ?? name,
-    ext: options?.ext ?? 'js'
-  });
+export const bundle = async (file: string): Promise<BundleResult> => {
+  const { default: page } = await import(`file://${file}`) as { default: Partial<Page> };
 
-  if (!fs.existsSync(page)) throw new Error(`${page.replace(process.cwd(), '')} does not exist`);
+  if (typeof page.url !== 'string') {
+    throw new Error('Invalid type `url`, expected `string`');
+  }
 
-  const meta = await read(url);
+  if (!is.url(page.url)) {
+    throw new Error('Invalid `url`, expected valid url');
+  }
+
+  if (typeof page.html !== 'string') {
+    throw new Error('Invalid type `html`, expected `string`');
+  }
+
+  if (Array.isArray(page.redirects) && !page.redirects.every(is.string)) {
+    throw new Error('Invalid type `redirects`, expected `string[]`');
+  }
 
   return {
-    redirects: meta.redirects,
-    in: page,
-    out: meta.url.length === 1 ?
+    redirects: page.redirects ?? [],
+    path: page.url.length === 1 ?
       'index.html' :
       path.format({
-        dir: meta.url.split('/').slice(0, -1).join(path.sep),
-        name: meta.url.split('/').slice(-1)[0],
+        dir: page.url.split('/').slice(0, -1).join(path.sep),
+        name: page.url.split('/').slice(-1)[0],
         ext: 'html'
-      })
+      }),
+    html: page.html
   };
 };
