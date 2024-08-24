@@ -1,4 +1,5 @@
 import path from 'path';
+import { absolute } from './path';
 
 import * as is from './is';
 
@@ -15,7 +16,7 @@ export type BundleResult = {
 };
 
 export const bundle = async (file: string): Promise<BundleResult> => {
-  const { default: page } = await import(`file://${file}`) as { default: Partial<Page> };
+  const { default: page } = await import(`file://${absolute(file)}`) as { default: Partial<Page> };
 
   if (typeof page.url !== 'string') {
     throw new Error('Invalid type `url`, expected `string`');

@@ -27,80 +27,30 @@ npm i @chronocide/spider
 
 ### API
 
-#### `bundle`
+#### `Page`
 
-`bundle` creates a page bundle based on a meta file. The meta file is expected to be in `json` format.
-
-```JSON
-{
-  "url": "/about"
+```TS
+type Page = {
+  url: string; // Expected URL structure, e.g. /about/spider
+  html: string; // HTML string
+  redirects?: string[]; // List of old URL's
 }
 ```
 
-```TS
+#### `bundle`
+
+Creates a bundle based on `Page`. `spider` currently only supports JavaScript [esm](https://nodejs.org/api/esm.html) exports.
+
+```JS
 import { bundle } from '@chronocide/spider';
 
-const result = bundle(path.join(process.cwd(), 'src/index.json'));
-```
-
-```TS
-type BundleOptions = {
-  /** Page file name, defaults to `<meta.name>` */
-  name?: string;
-  /** Page file extension, defaults to `js` */
-  ext?: string;
-};
+const result = bundle('src/index.js'));
 ```
 
 ```TS
 type BundleResult = {
-  redirects: string[] | null;
-  in: string; // Absolute page path
-  out: string; // Relative output path
-}
-```
-
-```TS
-type Meta = {
-  url: string;
-  redirects: string[] | null;
-}
-```
-
-#### `build`
-
-`build` transforms a JavaScript file into an HTML file. The JavaScript file must default export a `string`.
-
-```TS
-export default '<!doctype html><html lang="en"><title>.</title></html>';
-```
-
-```TS
-import { build } from '@chronocide/spider';
-
-const result = build(path.join(process.cwd(), 'src/index.json'));
-```
-
-```TS
-type BuildOptions = {
-  /** Output directory */
-  outdir?: string;
-  /** Should file contents be written to disk, default `false` */
-  write?: boolean;
-  /** Page file name, defaults to `<meta.name>` */
-  name?: string;
-  loader?: {
-    type: string;
-    /** Output should default export an HTML string */
-    transform: (raw: string) => string;
-  };
-};
-```
-
-```TS
-type BuildResult = {
-  redirects: string[] | null;
+  redirects: string[];
   path: string;
   html: string;
-};
+}
 ```
