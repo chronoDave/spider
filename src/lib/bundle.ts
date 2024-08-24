@@ -15,8 +15,12 @@ export type BundleResult = {
   html: string;
 };
 
-export const bundle = async (file: string): Promise<BundleResult> => {
-  const { default: page } = await import(`file://${absolute(file)}`) as { default: Partial<Page> };
+export const bundle = async (file: string | Buffer): Promise<BundleResult> => {
+  const { default: page } = (
+    typeof file === 'string' ?
+      await import(`file://${absolute(file)}`) :
+      await import(`data:text/javascript;base64,${file.toString('base64')}`)
+  ) as { default: Page };
 
   if (typeof page.url !== 'string') {
     throw new Error('Invalid type `url`, expected `string`');

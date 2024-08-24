@@ -48,11 +48,28 @@ test('[bundle] throws on invalid page', async t => {
   t.end();
 });
 
-test('[bundle] passes on valid page', async t => {
+test('[bundle] passes on page url', async t => {
   const { valid, cleanup } = await init();
 
   try {
     const result = await bundle(valid);
+
+    t.deepEqual(result.redirects, [], 'redirects');
+    t.equal(result.path, 'index.html', 'path');
+    t.equal(result.html, '<!doctype html><html lang=`en`><title>.</title></html>', 'html');
+  } catch (err) {
+    t.fail((err as Error).message);
+  }
+
+  await cleanup();
+  t.end();
+});
+
+test('[bundle] passes on page buffer', async t => {
+  const { valid, cleanup } = await init();
+
+  try {
+    const result = await bundle(await fsp.readFile(valid));
 
     t.deepEqual(result.redirects, [], 'redirects');
     t.equal(result.path, 'index.html', 'path');

@@ -42,9 +42,15 @@ type Page = {
 Creates a bundle based on `Page`. `spider` currently only supports JavaScript [esm](https://nodejs.org/api/esm.html) exports.
 
 ```JS
+import fs from 'fs';
 import { bundle } from '@chronocide/spider';
 
-const result = bundle('src/index.js'));
+// File path
+bundle('src/index.js'));
+
+// Buffer
+const buffer = fs.readFileSync('src/index.js');
+bundle(buffer);
 ```
 
 ```TS
