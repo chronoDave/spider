@@ -1,7 +1,7 @@
 {
   "name": "@chronocide/spider",
   "version": "0.0.6",
-  "description": "Static HTML generator",
+  "description": "Simple tatic HTML generator",
   "type": "module",
   "types": "dist/spider.d.ts",
   "exports": {
