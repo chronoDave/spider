@@ -1,13 +1,11 @@
+import type { LoadOptions } from './load';
+
 import path from 'path';
-import { absolute } from './path';
 
 import * as is from './is';
+import load from './load';
 
-export type Page = {
-  url: string;
-  html: string;
-  redirects?: string[];
-};
+export type BundleOptions = LoadOptions;
 
 export type BundleResult = {
   redirects: string[];
@@ -15,12 +13,8 @@ export type BundleResult = {
   html: string;
 };
 
-export const bundle = async (file: string | Buffer): Promise<BundleResult> => {
-  const { default: page } = (
-    typeof file === 'string' ?
-      await import(`file://${absolute(file)}`) :
-      await import(`data:text/javascript;base64,${file.toString('base64')}`)
-  ) as { default: Page };
+export const bundle = async (file: string | Buffer, options: BundleOptions): Promise<BundleResult> => {
+  const page = await load(file, options);
 
   if (typeof page.url !== 'string') {
     throw new Error('Invalid type `url`, expected `string`');

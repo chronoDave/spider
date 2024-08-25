@@ -39,18 +39,35 @@ type Page = {
 
 #### `bundle`
 
-Creates a bundle based on `Page`. `spider` currently only supports JavaScript [esm](https://nodejs.org/api/esm.html) exports.
+Creates a bundle if file or buffer contains a default exported `Page`. `spider` currently only supports JavaScript [esm](https://nodejs.org/api/esm.html) exports.
+
+The relative output path of the page file is equal to the url defined in `Page`.
+
+```JS
+// src/about/spider/index.js
+export default {
+  url: '/',
+  html: '<body></body>'
+}
+```
 
 ```JS
 import fs from 'fs';
 import { bundle } from '@chronocide/spider';
 
 // File path
-bundle('src/index.js'));
+bundle('src/about/spider/index.js'));
 
 // Buffer
-const buffer = fs.readFileSync('src/index.js');
+const buffer = fs.readFileSync('src/about/spider/index.js');
 bundle(buffer);
+
+// Output
+// {
+//   redirects: [],
+//   path: '/index.html',
+//   html: '<body></body>'
+// }
 ```
 
 ```TS
@@ -58,5 +75,10 @@ type BundleResult = {
   redirects: string[];
   path: string;
   html: string;
+}
+
+type BundleOptions = {
+  /** If true, show buffer in error stack trace */
+  showBufferError?: boolean
 }
 ```
