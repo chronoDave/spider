@@ -13,23 +13,31 @@ export type BundleResult = {
   html: string;
 };
 
+const message = (file: string | Buffer) => (message: string) => {
+  const source = typeof file === 'string' ?
+    `${file}` :
+    '<Buffer>';
+
+  return `${message}\n\tat ${source}`;
+};
+
 export const bundle = async (file: string | Buffer, options: BundleOptions): Promise<BundleResult> => {
   const page = await load(file, options);
 
   if (typeof page.url !== 'string') {
-    throw new Error('Invalid type `url`, expected `string`');
+    throw new Error(message(file)('Invalid type `url`, expected `string`'));
   }
 
   if (!is.url(page.url)) {
-    throw new Error('Invalid `url`, expected valid url');
+    throw new Error(message(file)('Invalid `url`, expected valid url'));
   }
 
   if (typeof page.html !== 'string') {
-    throw new Error('Invalid type `html`, expected `string`');
+    throw new Error(message(file)('Invalid type `html`, expected `string`'));
   }
 
   if (Array.isArray(page.redirects) && !page.redirects.every(is.string)) {
-    throw new Error('Invalid type `redirects`, expected `string[]`');
+    throw new Error(message(file)('Invalid type `redirects`, expected `string[]`'));
   }
 
   return {

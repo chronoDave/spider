@@ -20,6 +20,6 @@ export default async (file: string | Buffer, options?: LoadOptions): Promise<Pag
   } catch (err) {
     if (options?.showBufferError) throw err;
     if (!Buffer.isBuffer(file)) throw err;
-    throw new Error(`<Buffer>: ${(err as Error).message}`);
+    throw new Error(`${(err as Error).message}\n\tat <Buffer>`);
   }
 };

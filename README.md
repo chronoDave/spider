@@ -78,7 +78,7 @@ type BundleResult = {
 }
 
 type BundleOptions = {
-  /** If true, show buffer in error stack trace */
+  /** If true, show whole buffer in error stack trace */
   showBufferError?: boolean
 }
 ```
