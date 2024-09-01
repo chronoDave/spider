@@ -18,11 +18,15 @@ const message = (file: string | Buffer) => (message: string) => {
     `${file}` :
     '<Buffer>';
 
-  return `${message}\n\tat ${source}`;
+  return `${message} at ${source}`;
 };
 
 export const bundle = async (file: string | Buffer, options: BundleOptions): Promise<BundleResult> => {
   const page = await load(file, options);
+
+  if (typeof page !== 'object') {
+    throw new Error(message(file)('Invalid default export, expected `Page`'));
+  }
 
   if (typeof page.url !== 'string') {
     throw new Error(message(file)('Invalid type `url`, expected `string`'));
