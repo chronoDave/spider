@@ -5,6 +5,12 @@ import path from 'path';
 import * as is from './is';
 import load from './load';
 
+export type Page = {
+  url: string;
+  html: string;
+  redirects?: string[];
+};
+
 export type BundleOptions = LoadOptions;
 
 export type BundleResult = {
@@ -21,10 +27,12 @@ const message = (file: string | Buffer) => (message: string) => {
   return `${message} at ${source}`;
 };
 
-export const bundle = async (file: string | Buffer, options: BundleOptions): Promise<BundleResult> => {
+export const bundle = async (file: string | Buffer, options?: BundleOptions): Promise<BundleResult | null> => {
   const page = await load(file, options);
 
-  if (typeof page !== 'object') {
+  if (!page || page === '') return null;
+
+  if (!is.record(page)) {
     throw new Error(message(file)('Invalid default export, expected `Page`'));
   }
 
@@ -45,7 +53,7 @@ export const bundle = async (file: string | Buffer, options: BundleOptions): Pro
   }
 
   return {
-    redirects: page.redirects ?? [],
+    redirects: (page.redirects as Page['redirects']) ?? [],
     path: page.url.length === 1 ?
       'index.html' :
       path.format({

@@ -1,16 +1,10 @@
 import { absolute } from './path';
 
-export type Page = {
-  url: string;
-  html: string;
-  redirects?: string[];
-};
-
 export type LoadOptions = {
   showBufferError?: boolean;
 };
 
-export default async (file: string | Buffer, options?: LoadOptions): Promise<Page> => {
+export default async (file: string | Buffer, options?: LoadOptions): Promise<unknown> => {
   try {
     const module = typeof file === 'string' ?
       await import(`file://${absolute(file)}`) :

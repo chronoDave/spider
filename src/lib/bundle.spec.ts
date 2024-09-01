@@ -1,33 +1,8 @@
 import test from 'tape';
 import fsp from 'fs/promises';
-import path from 'path';
 
 import { bundle } from './bundle';
-
-const init = async () => {
-  const tmp = path.join(process.cwd(), 'tmp');
-
-  const invalid = {
-    html: path.join(tmp, 'html.js'),
-    url: path.join(tmp, 'url.js'),
-    redirects: path.join(tmp, 'redirects.js')
-  } as const;
-  const valid = path.join(tmp, 'valid.js');
-
-  await fsp.mkdir(tmp);
-  await Promise.all([
-    fsp.writeFile(invalid.url, 'export default { html: "", url: "", redirects: [] }'),
-    fsp.writeFile(invalid.html, 'export default { html: 1, url: "/", redirects: [] }'),
-    fsp.writeFile(invalid.redirects, 'export default { html: "", url: "/", redirects: [1] }'),
-    fsp.writeFile(valid, 'export default { html: "<!doctype html><html lang=`en`><title>.</title></html>", url: "/", redirects: [] }')
-  ]);
-
-  return {
-    valid,
-    invalid,
-    cleanup: () => fsp.rm(tmp, { recursive: true, force: true })
-  };
-};
+import init from './bundle.struct';
 
 test('[bundle] throws on invalid page', async t => {
   const { invalid, cleanup } = await init();
@@ -48,15 +23,31 @@ test('[bundle] throws on invalid page', async t => {
   t.end();
 });
 
+test('[bundle] returns null on empty file', async t => {
+  const { empty, cleanup } = await init();
+
+  try {
+    const result = await bundle(empty);
+
+    t.equal(result, null, 'empty string');
+  } catch (err) {
+    t.fail((err as Error).message);
+  }
+
+  await cleanup();
+  t.end();
+});
+
 test('[bundle] passes on page url', async t => {
   const { valid, cleanup } = await init();
 
   try {
     const result = await bundle(valid);
 
-    t.deepEqual(result.redirects, [], 'redirects');
-    t.equal(result.path, 'index.html', 'path');
-    t.equal(result.html, '<!doctype html><html lang=`en`><title>.</title></html>', 'html');
+    t.notEqual(result, null, 'is valid page');
+    t.deepEqual(result?.redirects, [], 'redirects');
+    t.equal(result?.path, 'index.html', 'path');
+    t.equal(result?.html, '<!doctype html><html lang=`en`><title>.</title></html>', 'html');
   } catch (err) {
     t.fail((err as Error).message);
   }
@@ -71,9 +62,9 @@ test('[bundle] passes on page buffer', async t => {
   try {
     const result = await bundle(await fsp.readFile(valid));
 
-    t.deepEqual(result.redirects, [], 'redirects');
-    t.equal(result.path, 'index.html', 'path');
-    t.equal(result.html, '<!doctype html><html lang=`en`><title>.</title></html>', 'html');
+    t.deepEqual(result?.redirects, [], 'redirects');
+    t.equal(result?.path, 'index.html', 'path');
+    t.equal(result?.html, '<!doctype html><html lang=`en`><title>.</title></html>', 'html');
   } catch (err) {
     t.fail((err as Error).message);
   }
