@@ -7,7 +7,7 @@ import load from './load';
 
 export type Page = {
   url: string;
-  html: string;
+  html: (metadata: Metadata) => string;
   redirects?: string[];
 };
 
@@ -16,7 +16,7 @@ export type BundleOptions = LoadOptions;
 export type BundleResult = {
   redirects: string[];
   path: string;
-  html: (metadata: Metadata) => string;
+  html: string;
 };
 
 const message = (file: string | Buffer) => (message: string) => {
