@@ -19,13 +19,9 @@ export type BundleResult = {
   html: string;
 };
 
-const message = (file: string | Buffer) => (message: string) => {
-  const source = typeof file === 'string' ?
-    `${file}` :
-    '<Buffer>';
-
-  return `${message} at ${source}`;
-};
+const message = (file: string | Buffer) =>
+  (message: string) =>
+    `${message} at ${typeof file === 'string' ? file : '<Buffer>'}`;
 
 export const bundle = async (file: string | Buffer, options?: BundleOptions): Promise<BundleResult | null> => {
   const { metadata, page } = await load(file, options);

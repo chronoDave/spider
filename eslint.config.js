@@ -1,13 +1,6 @@
-import { configs, env } from '@chronocide/eslint-config';
+import config from '@chronocide/eslint-config';
 
-export default [
-  configs.base,
-  configs.typescript,
-  {
-    languageOptions: {
-      globals: {
-        ...env.node
-      }
-    }
-  }
-]
+export default config({
+  ts: true,
+  node: true
+});

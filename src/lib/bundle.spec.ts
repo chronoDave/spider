@@ -10,15 +10,15 @@ test('[bundle] throws on invalid page', async t => {
 
   await bundle(invalid.url)
     .then(() => t.fail('expected to throw `url`'))
-    .catch(err => t.pass(err));
+    .catch((err: unknown) => t.pass((err as Error).message));
 
   await bundle(invalid.html)
     .then(() => t.fail('expected to throw `html`'))
-    .catch(err => t.pass(err));
+    .catch((err: unknown) => t.pass((err as Error).message));
 
   await bundle(invalid.redirects)
     .then(() => t.fail('expected to throw `redirects`'))
-    .catch(err => t.pass(err));
+    .catch((err: unknown) => t.pass((err as Error).message));
 
   await cleanup();
   t.end();

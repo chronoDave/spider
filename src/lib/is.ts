@@ -5,4 +5,4 @@ export const record = (x: unknown): x is Record<string, unknown> =>
 
 export const string = (x: unknown): x is string => typeof x === 'string';
 
-export const url = (x: string) => /^(\/$|(\/\S+)+\w$)/u.test(x);
+export const url = (x: string): boolean => /^(\/$|(\/\S+)+\w$)/u.test(x);

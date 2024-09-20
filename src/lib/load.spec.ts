@@ -27,7 +27,7 @@ test('[load] throws minified error on invalid buffer', async t => {
     await load(Buffer.from('e'));
     t.fail('expected to throw');
   } catch (err) {
-    t.false((err as Error).stack?.includes('data:text/javascript;base64,'), (err as Error)?.stack);
+    t.false((err as Error).stack?.includes('data:text/javascript;base64,'), (err as Error).stack);
   }
 
   t.end();
@@ -38,7 +38,7 @@ test('[load] throws normal error on invalid buffer if showBufferError enabled', 
     await load(Buffer.from('e'), { showBufferError: true });
     t.fail('expected to throw');
   } catch (err) {
-    t.true((err as Error).stack?.includes('data:text/javascript;base64,'), (err as Error)?.stack);
+    t.true((err as Error).stack?.includes('data:text/javascript;base64,'), (err as Error).stack);
   }
 
   t.end();

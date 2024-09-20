@@ -1,6 +1,7 @@
 import fsp from 'fs/promises';
 import path from 'path';
 
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export default async () => {
   const tmp = path.join(process.cwd(), 'tmp');
 
@@ -28,6 +29,6 @@ export default async () => {
     invalid,
     nested,
     empty,
-    cleanup: () => fsp.rm(tmp, { recursive: true, force: true })
+    cleanup: async () => fsp.rm(tmp, { recursive: true, force: true })
   };
 };
