@@ -31,7 +31,7 @@ npm i @chronocide/spider
 
 ```TS
 type Metadata = {
-  lastModified: Date | null;
+  lastModified: Date;
 };
 
 type Page = {
@@ -82,7 +82,12 @@ type BundleResult = {
 }
 
 type BundleOptions = {
+  /**
+   * If `file` is a `Buffer`, `lastModified` cannot be determined.
+   * `spider` will default to `new Date()`
+  */
+  lastModified?: Date;
   /** If true, show whole buffer in error stack trace */
-  showBufferError?: boolean
+  showBufferError?: boolean;
 }
 ```

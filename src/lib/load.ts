@@ -3,10 +3,16 @@ import fsp from 'fs/promises';
 import { absolute } from './path';
 
 export type Metadata = {
-  lastModified: Date | null;
+  lastModified: Date;
 };
 
 export type LoadOptions = {
+  /**
+   * If `file` is a `Buffer`, `lastModified` cannot be determined.
+   * `spider` will default to `new Date()`
+  */
+  lastModified?: Date;
+  /** If true, show whole buffer in error stack trace */
   showBufferError?: boolean;
 };
 
@@ -30,7 +36,7 @@ export default async (file: string | Buffer, options?: LoadOptions): Promise<Loa
       page: module.default,
       metadata: {
         lastModified: Buffer.isBuffer(file) ?
-          null :
+          options?.lastModified ?? new Date() :
           (await fsp.stat(file)).mtime
       }
     };

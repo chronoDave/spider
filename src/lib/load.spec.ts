@@ -47,7 +47,7 @@ test('[load] throws normal error on invalid buffer if showBufferError enabled', 
 test('[load] returns buffer metadata', async t => {
   const { metadata } = await load(Buffer.from('export default {};'));
 
-  t.equal(metadata.lastModified, null, 'does not return last modified');
+  t.true(metadata.lastModified instanceof Date, 'returns last modified');
 
   t.end();
 });
