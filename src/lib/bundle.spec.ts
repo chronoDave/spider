@@ -1,5 +1,6 @@
 import test from 'tape';
 import fsp from 'fs/promises';
+import path from 'path';
 
 import { bundle } from './bundle';
 import init from './bundle.struct';
@@ -57,13 +58,13 @@ test('[bundle] passes on page url', async t => {
 });
 
 test('[bundle] passes on page buffer', async t => {
-  const { valid, cleanup } = await init();
+  const { nested, cleanup } = await init();
 
   try {
-    const result = await bundle(await fsp.readFile(valid));
+    const result = await bundle(await fsp.readFile(nested));
 
     t.deepEqual(result?.redirects, [], 'redirects');
-    t.equal(result?.path, 'index.html', 'path');
+    t.equal(result?.path, path.normalize('/chronocide/spider.html'), 'path');
     t.equal(result?.html, '<!doctype html><html lang=`en`><title>.</title></html>', 'html');
   } catch (err) {
     t.fail((err as Error).message);

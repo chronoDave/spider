@@ -4,17 +4,18 @@ import path from 'path';
 
 import load from './load';
 
-test('[load] throws normal error on invalid file', async t => {
+test('[load] returns file metadata', async t => {
   const file = path.resolve(process.cwd(), 'tmp/index.js');
 
   await fsp.mkdir(path.parse(file).dir, { recursive: true });
-  await fsp.writeFile(file, 'e');
+  await fsp.writeFile(file, 'export default {}');
 
   try {
-    await load(file);
-    t.fail('expected to throw');
+    const { metadata } = await load(file);
+
+    t.true(metadata.lastModified instanceof Date, 'returns last modified');
   } catch (err) {
-    t.false((err as Error).stack?.includes('data:text/javascript;base64,'), (err as Error)?.stack);
+    t.fail((err as Error).message);
   }
 
   await fsp.rm(path.parse(file).dir, { recursive: true, force: true });
@@ -39,6 +40,14 @@ test('[load] throws normal error on invalid buffer if showBufferError enabled', 
   } catch (err) {
     t.true((err as Error).stack?.includes('data:text/javascript;base64,'), (err as Error)?.stack);
   }
+
+  t.end();
+});
+
+test('[load] returns buffer metadata', async t => {
+  const { metadata } = await load(Buffer.from('export default {};'));
+
+  t.equal(metadata.lastModified, null, 'does not return last modified');
 
   t.end();
 });

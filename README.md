@@ -30,9 +30,13 @@ npm i @chronocide/spider
 #### `Page`
 
 ```TS
+type Metadata = {
+  lastModified: Date | null;
+};
+
 type Page = {
   url: string; // Expected URL structure, e.g. /about/spider
-  html: string; // HTML string
+  html: (metadata: Metadata) => string; // HTML string
   redirects?: string[]; // List of old URL's
 }
 ```
@@ -47,7 +51,7 @@ The relative output path of the page file is equal to the url defined in `Page`.
 // src/about/spider/index.js
 export default {
   url: '/',
-  html: '<body></body>'
+  html: ({ lastModified }) => `<body>${lastModified}</body>`
 }
 ```
 
@@ -66,7 +70,7 @@ bundle(buffer);
 // {
 //   redirects: [],
 //   path: '/index.html',
-//   html: '<body></body>'
+//   html: '<body>2000-01-01T00:00:00Z</body>'
 // }
 ```
 

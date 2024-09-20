@@ -1,4 +1,4 @@
-import type { LoadOptions } from './load';
+import type { LoadOptions, Metadata } from './load';
 
 import path from 'path';
 
@@ -16,7 +16,7 @@ export type BundleOptions = LoadOptions;
 export type BundleResult = {
   redirects: string[];
   path: string;
-  html: string;
+  html: (metadata: Metadata) => string;
 };
 
 const message = (file: string | Buffer) => (message: string) => {
@@ -28,7 +28,7 @@ const message = (file: string | Buffer) => (message: string) => {
 };
 
 export const bundle = async (file: string | Buffer, options?: BundleOptions): Promise<BundleResult | null> => {
-  const page = await load(file, options);
+  const { metadata, page } = await load(file, options);
 
   if (!page || page === '') return null;
 
@@ -44,23 +44,25 @@ export const bundle = async (file: string | Buffer, options?: BundleOptions): Pr
     throw new Error(message(file)('Invalid `url`, expected valid url'));
   }
 
-  if (typeof page.html !== 'string') {
-    throw new Error(message(file)('Invalid type `html`, expected `string`'));
+  if (typeof page.html !== 'function') {
+    throw new Error(message(file)('Invalid type `html`, expected `function`'));
   }
 
   if (Array.isArray(page.redirects) && !page.redirects.every(is.string)) {
     throw new Error(message(file)('Invalid type `redirects`, expected `string[]`'));
   }
 
+  const out = page.url.length === 1 ?
+    'index.html' :
+    path.format({
+      dir: page.url.split('/').slice(0, -1).join(path.sep),
+      name: page.url.split('/').slice(-1)[0],
+      ext: 'html'
+    });
+
   return {
     redirects: (page.redirects as Page['redirects']) ?? [],
-    path: page.url.length === 1 ?
-      'index.html' :
-      path.format({
-        dir: page.url.split('/').slice(0, -1).join(path.sep),
-        name: page.url.split('/').slice(-1)[0],
-        ext: 'html'
-      }),
-    html: page.html
+    path: out,
+    html: page.html(metadata)
   };
 };
