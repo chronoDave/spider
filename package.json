@@ -1,7 +1,9 @@
 {
   "name": "@chronocide/spider",
   "version": "0.1.2",
-  "description": "Simple tatic HTML generator",
+  "description": "Simple static HTML generator",
+  "author": "Chronocide",
+  "license": "GPL-3.0",
   "type": "module",
   "types": "dist/spider.d.ts",
   "exports": {
@@ -15,8 +17,6 @@
     "type": "git",
     "url": "git+https://github.com/chronoDave/spider.git"
   },
-  "author": "Chronocide",
-  "license": "GPL-3.0",
   "engines": {
     "node": ">=20.16.0"
   },

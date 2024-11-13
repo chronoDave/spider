@@ -15,9 +15,7 @@
   </a>
 </div>
 
-## Usage
-
-### Installation
+## Install
 
 Install using [npm](npmjs.org):
 
@@ -25,69 +23,80 @@ Install using [npm](npmjs.org):
 npm i @chronocide/spider
 ```
 
-### API
-
-#### `Page`
+## Usage
 
 ```TS
-type Metadata = {
-  lastModified: Date;
-};
+// index.js
+export const url = '/';
 
-type Page = {
-  url: string; // Expected URL structure, e.g. /about/spider
-  html: (metadata: Metadata) => string; // HTML string
-  redirects?: string[]; // List of old URL's
-}
+export default ({ ctime }) => `<body>${ctime}</body>`;
 ```
 
-#### `bundle`
+```TS
+// about.js
+export const url = '/about';
 
-Creates a bundle if file or buffer contains a default exported `Page`. `spider` currently only supports JavaScript [esm](https://nodejs.org/api/esm.html) exports.
-
-The relative output path of the page file is equal to the url defined in `Page`.
-
-```JS
-// src/about/spider/index.js
-export default {
-  url: '/',
-  html: ({ lastModified }) => `<body>${lastModified}</body>`
-}
+export default '<h1>About</h1>';
 ```
 
-```JS
+```TS
+// about-spider.js
+export const url = '/about/spider';
+
+export default '<h1>About spider</h1>';
+```
+
+```TS
 import fs from 'fs';
-import { bundle } from '@chronocide/spider';
+import spider from '@chronocide/spider';
 
-// File path
-bundle('src/about/spider/index.js'));
+/**
+ * path: '/index.html'
+ * html: '<body>Mon, 10 Oct 2011 23:24:11 GMT</body>'
+ */
+await spider()('index.js');
 
-// Buffer
-const buffer = fs.readFileSync('src/about/spider/index.js');
-bundle(buffer);
+/**
+ * path: '/about.html'
+ * html: '<h1>About</h1>'
+ */
+await spider()('about.js');
 
-// Output
-// {
-//   redirects: [],
-//   path: '/index.html',
-//   html: '<body>2000-01-01T00:00:00Z</body>'
-// }
+/**
+ * path: '/about/spider.html'
+ * html: '<h1>About spider</h1>'
+ */
+await spider()('about-spider.js');
+
+/**
+ * path: 'www/about/spider.html'
+ * html: '<h1>About spider</h1>'
+ */
+await spider({ outdir: 'www' })('about-spider.js');
 ```
 
-```TS
-type BundleResult = {
-  redirects: string[];
-  path: string;
-  html: string;
-}
+## API
 
-type BundleOptions = {
-  /**
-   * If `file` is a `Buffer`, `lastModified` cannot be determined.
-   * `spider` will default to `new Date()`
-  */
-  lastModified?: Date;
-  /** If true, show whole buffer in error stack trace */
-  showBufferError?: boolean;
-}
+### `spider`
+
+```TS
+type spider = (options?: LoadOptions) => (file: string) => Promise<LoadResult>
+```
+
+### `LoadOptions`
+
+```TS
+export type LoadOptions = {
+  write?: boolean;
+  outdir?: string;
+};
+```
+
+### `LoadResult`
+
+```TS
+export type LoadResult = {
+  file: string;
+  html: string;
+};
 ```
