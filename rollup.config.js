@@ -18,12 +18,17 @@ export default [{
   ],
   output: [{
     file: output('js'),
-    exports: 'auto',
-    format: 'es'
+    format: 'esm'
+  }, {
+    file: output('cjs'),
+    format: 'cjs'
   }]
 }, {
   input,
   plugins: [dts()],
+  external: [
+    'fs'
+  ],
   output: {
     file: output('d.ts'),
     format: 'es'

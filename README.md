@@ -80,13 +80,15 @@ await spider({ outdir: 'www' })('about-spider.js');
 ### `spider`
 
 ```TS
-type spider = (options?: LoadOptions) => (file: string) => Promise<LoadResult>
+(options?: SpiderOptions) =>
+  (file: string | Buffer, stats?: fs.Stats) =>
+    Promise<SpiderResult>
 ```
 
 ### `LoadOptions`
 
 ```TS
-export type LoadOptions = {
+export type SpiderOptions = {
   write?: boolean;
   outdir?: string;
 };
@@ -95,7 +97,7 @@ export type LoadOptions = {
 ### `LoadResult`
 
 ```TS
-export type LoadResult = {
+export type SpiderResult = {
   file: string;
   html: string;
 };

@@ -8,7 +8,10 @@
   "types": "dist/spider.d.ts",
   "exports": {
     "./package.json": "./package.json",
-    ".": "./dist/spider.js"
+    ".": {
+      "import": "./dist/spider.js",
+      "require": "./dist/spider.cjs"
+    }
   },
   "files": [
     "dist/**/*"

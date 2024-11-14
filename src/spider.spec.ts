@@ -117,3 +117,16 @@ test('[spider] throws on invalid url', async t => {
   await cleanup();
   t.end();
 });
+
+test('[spider] accepts buffer', async t => {
+  try {
+    const x = await spider()(Buffer.from('export const url = "/";\nexport default "<p></p>"'));
+
+    t.equal(x.file, 'index.html', 'returns url');
+    t.equal(x.html, '<p></p>', 'returns string html');
+  } catch (err) {
+    t.fail((err as Error).message);
+  }
+
+  t.end();
+});
