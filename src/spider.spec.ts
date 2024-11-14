@@ -89,11 +89,11 @@ test('[spider] resolves relative url', async t => {
 });
 
 test('[spider] writes html', async t => {
-  const { cleanup } = await setup('export const url = "/about";\nexport default stats => `<p>${stats.ctimeMs}</p>;`');
+  const { cleanup } = await setup('export const url = "/about/me";\nexport default stats => `<p>${stats.ctimeMs}</p>;`');
 
   try {
     await spider({ write: true, outdir: 'tmp' })('tmp/index.js');
-    await fsp.stat(path.join(process.cwd(), 'tmp/about.html'));
+    await fsp.stat(path.join(process.cwd(), 'tmp/about/me.html'));
 
     t.pass('writes html');
   } catch (err) {

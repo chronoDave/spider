@@ -47,7 +47,10 @@ export default (options?: SpiderOptions) => async (file: string | Buffer, stats?
         raw.default(stats ?? (typeof file === 'string' ? await fsp.stat(file) : null))
     };
 
-    if (options?.write) await fsp.writeFile(path.join(process.cwd(), result.file), result.html);
+    if (options?.write) {
+      await fsp.mkdir(path.parse(result.file).dir, { recursive: true });
+      await fsp.writeFile(path.join(process.cwd(), result.file), result.html);
+    }
 
     return result;
   } catch (err) {
