@@ -30,6 +30,12 @@ test('[bundle] resolves file path', t => {
     'resolves outdir'
   );
 
+  t.equal(
+    bundle()({ url: 'about', html: '' }).file,
+    path.normalize('about.html'),
+    'resolves url without /'
+  );
+
   t.end();
 });
 

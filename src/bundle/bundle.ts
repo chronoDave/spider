@@ -19,7 +19,7 @@ export default (options?: BundleOptions) =>
       dir: [options?.outdir, ...page.url.split('/').slice(1, -1)]
         .filter(x => x)
         .join(path.sep),
-      name: /\/([^\/]+)$/.exec(page.url)?.[1] ?? 'index',
+      name: /\/?([^\/]+)$/.exec(page.url)?.[1] ?? 'index',
       ext: '.html'
     }),
     html: typeof page.html === 'string' ?
