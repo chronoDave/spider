@@ -25,6 +25,8 @@ npm i @chronocide/spider
 
 ## Usage
 
+`spider` only supports **JS** **ESM** exports. If you wish to use TypeScript, JSX or anything else, code must be transpiled to JS ESM. See [@chronocide/esbuild-plugin-spider](https://github.com/chronoDave/esbuild-plugin-spider) for an examples. 
+
 ```TS
 // index.js
 export const url = '/';
