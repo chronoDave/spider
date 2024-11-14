@@ -25,7 +25,9 @@ npm i @chronocide/spider
 
 ## Usage
 
-`spider` only supports **JS** **ESM** exports. If you wish to use TypeScript, JSX or anything else, code must be transpiled to JS ESM. See [@chronocide/esbuild-plugin-spider](https://github.com/chronoDave/esbuild-plugin-spider) for an examples. 
+`spider` only supports **JS** **ESM** exports. If you wish to use TypeScript, JSX or anything else, code must be transpiled to JS ESM. See [@chronocide/esbuild-plugin-spider](https://github.com/chronoDave/esbuild-plugin-spider) for an examples.
+
+### Single page
 
 ```TS
 // index.js
@@ -77,30 +79,34 @@ await spider()('about-spider.js');
 await spider({ outdir: 'www' })('about-spider.js');
 ```
 
-## API
-
-### `spider`
+### Multiple pages
 
 ```TS
-(options?: SpiderOptions) =>
-  (file: string | Buffer, stats?: fs.Stats) =>
-    Promise<SpiderResult>
+// blogs.js
+import fsp from 'fs/promises';
+import path from 'path';
+
+const files = await Promise.all(fsp.readdir(path.join(process.cwd(), 'src/blog/posts')));
+const pages = await Promise.all(files.map(file => {
+  const { name } = path.parse(file);
+  const html = await fs.readFile(file, 'utf-8');
+
+  return ({
+    url: `/blog/${name}`,
+    html
+  });
+}));
+
+export default pages;
 ```
 
-### `LoadOptions`
-
 ```TS
-export type SpiderOptions = {
-  write?: boolean;
-  outdir?: string;
-};
-```
+import fs from 'fs';
+import spider from '@chronocide/spider';
 
-### `LoadResult`
-
-```TS
-export type SpiderResult = {
-  file: string;
-  html: string;
-};
+/**
+ * path: '/blog/<name>'
+ * html: '<blog>'
+ */
+await spider()('blogs.js');
 ```
