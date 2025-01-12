@@ -36,6 +36,12 @@ test('[bundle] resolves file path', t => {
     'resolves url without /'
   );
 
+  t.equal(
+    bundle()({ url: '/about.xml', html: '' }).file,
+    path.normalize('about.xml'),
+    'resolves extension'
+  );
+
   t.end();
 });
 

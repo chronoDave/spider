@@ -2,7 +2,8 @@ import type { Stats } from 'fs';
 
 import path from 'path';
 
-type Html = string | ((stats: Stats | null) => string);
+/** Stats are only available if a file is loaded */
+export type Html = string | ((stats: Stats | null) => string);
 
 type Raw = {
   url: string;
