@@ -4,33 +4,18 @@ import path from 'path';
 
 import spider from './spider';
 
-test('[spider] loads string html', async t => {
+test('[spider] transforms js file into html file', async t => {
   const root = path.resolve(process.cwd(), 'tmp');
-  const file = {
-    single: {
-      path: path.resolve(root, 'single.js'),
-      content: 'export const url = "/"; export default "<h1>Home</h1>"'
-    },
-    multiple: {
-      path: path.resolve(root, 'multiple.js'),
-      content: 'export default [{ url: "/about", html: "" }, { url: "/blog/post", html: "" }]'
-    }
-  };
+  const file = path.resolve(root, 'page.js');
 
   try {
     await fsp.mkdir(root);
-    await Promise.all(Object.values(file).map(async x => fsp.writeFile(x.path, x.content)));
+    await fsp.writeFile(file, 'export const url = "/"; export default "<h1>Home</h1>"');
 
-    const single = await spider({ outdir: 'tmp' })('tmp/single.js');
+    const page = await spider({ outdir: 'tmp' })(file);
 
-    t.equal(single.length, 1, 'bundles file');
-    t.equal(single[0].file, path.normalize('tmp/index.html'), 'has path');
-    t.equal(single[0].html, '<h1>Home</h1>', 'has html');
-
-    const multiple = await spider({ outdir: 'tmp', write: true })('tmp/multiple.js');
-
-    t.equal(multiple.length, 2, 'bundles files');
-    t.true(await fsp.stat(path.join(process.cwd(), multiple[0].file)), 'writes file');
+    t.equal(page.path, path.normalize('tmp/index.html'), 'path');
+    t.equal(page.html, '<h1>Home</h1>', 'html');
   } catch (err) {
     t.fail((err as Error).message);
   } finally {
