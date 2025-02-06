@@ -7,7 +7,6 @@
   <a href="https://www.npmjs.com/package/@chronocide/spider">
     <img alt="NPM" src="https://img.shields.io/npm/v/@chronocide/spider?label=npm">
   </a>
-  <img src="https://img.badgesize.com/nevware21/badgesize/main/README.md" alt="" />
 </div>
 
 ## Install
