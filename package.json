@@ -26,12 +26,14 @@
   "scripts": {
     "lint": "eslint src",
     "build": "rollup -c",
+    "size": "node scripts/size.js",
     "test": "node scripts/tape.js && tape build/**/*.spec.js",
     "preversion": "npm run lint && npm run test && npm run build",
     "postversion": "npm publish"
   },
   "devDependencies": {
     "@chronocide/eslint-config": "github:chronoDave/eslint-config",
+    "@chronocide/package-size": "^0.0.1",
     "@types/tape": "^5.6.4",
     "esbuild": "^0.23.1",
     "eslint": "^9.9.0",
