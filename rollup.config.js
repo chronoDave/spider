@@ -1,7 +1,7 @@
 import esbuild from 'rollup-plugin-esbuild';
 import dts from 'rollup-plugin-dts';
 
-const input = 'src/spider.ts';
+const input = 'src/index.ts';
 const output = type => `dist/spider.${type}`;
 
 export default [{

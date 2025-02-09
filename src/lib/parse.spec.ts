@@ -36,8 +36,16 @@ test('[parse] parses buffer', async t => {
 
 test('[parse] accepts options', async t => {
   const result = await parse({
-    url: 'meta.url',
-    html: 'b'
+    url: raw => {
+      if (typeof raw.meta !== 'object' || raw.meta === null) throw new Error('Invalid export "meta"');
+      if (typeof (raw.meta as Record<string, unknown>).url !== 'string') throw new Error('Invalid export "meta.url"');
+
+      return (raw.meta as { url: string }).url;
+    },
+    html: raw => {
+      if (typeof raw.b !== 'string') throw new Error('Invalid export "b"');
+      return raw.b;
+    }
   })(Buffer.from('export const meta = { url: "/" };\nexport const b = "<p></p>"'));
 
   t.equal(result.url, '/', 'url');

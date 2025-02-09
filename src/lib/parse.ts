@@ -1,12 +1,11 @@
 import * as load from './load';
-import get from './get';
 
 /** Export mapping */
 export type ParseOptions = {
   /** Default `url` */
-  url?: string;
+  url?: (raw: Record<string, unknown>) => string;
   /** Default `default` */
-  html?: string;
+  html?: (raw: Record<string, unknown>) => string;
 };
 
 export type ParseResult = {
@@ -20,12 +19,11 @@ export default (options?: ParseOptions) =>
       const raw = Buffer.isBuffer(input) ?
         await load.buffer(input) :
         await load.file(input);
-      const prop = get(raw);
 
-      const url = prop(options?.url ?? 'url');
+      const url = options?.url?.(raw) ?? raw.url;
       if (typeof url !== 'string') throw new Error('Missing export: "url"');
 
-      const html = prop(options?.html ?? 'default');
+      const html = options?.html?.(raw) ?? raw.default;
       if (typeof html !== 'string') throw new Error('Missing export: "html"');
 
       return { url, html };

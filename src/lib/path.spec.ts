@@ -7,7 +7,7 @@ test('[path] resolves file path', t => {
   t.equal(
     path()('/'),
     normalize('index.html'),
-    'resolves root (relative)'
+    'resolves root (dir)'
   );
 
   t.equal(
@@ -18,14 +18,14 @@ test('[path] resolves file path', t => {
 
   t.equal(
     path()('/about/'),
-    normalize('about.html'),
-    'resolves level 1 (relative)'
+    normalize('about/index.html'),
+    'resolves level 1 (dir)'
   );
 
   t.equal(
     path()('/about'),
     normalize('about.html'),
-    'resolves relative without trailing slash'
+    'resolves level 1 (file)'
   );
 
   t.equal(
@@ -36,8 +36,14 @@ test('[path] resolves file path', t => {
 
   t.equal(
     path()('/about/me/'),
+    normalize('about/me/index.html'),
+    'resolves level 2 (dir)'
+  );
+
+  t.equal(
+    path()('/about/me'),
     normalize('about/me.html'),
-    'resolves level 2 (relative)'
+    'resolves level 2 (file)'
   );
 
   t.equal(

@@ -12,7 +12,7 @@ test('[spider] transforms js file into html file', async t => {
     await fsp.mkdir(root);
     await fsp.writeFile(file, 'export const url = "/"; export default "<h1>Home</h1>"');
 
-    const page = await spider({ outdir: 'tmp' })(file);
+    const page = await spider({ path: { outdir: 'tmp' } })(file);
 
     t.equal(page.path, path.normalize('tmp/index.html'), 'path');
     t.equal(page.html, '<h1>Home</h1>', 'html');

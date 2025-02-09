@@ -12,16 +12,11 @@
 
 ## Install
 
-Install using [npm](npmjs.org):
+Install using [npm](https://npmjs.org):
 
 ```sh
 npm i @chronocide/spider
 ```
-
-## API
-
- - `outdir`: Output root directory. Default `process.cwd()`
- - `properties`: Property mapping, accepts dot notation. Default `{ url: 'url', html: 'default' }`
 
 ## Usage
 
@@ -45,7 +40,7 @@ import spider from '@chronocide/spider';
 
 const page = await spider({ outdir: 'dist' })('/src/index.js');
 
-await fsp.writeFile(page.path, page.html);
+await fsp.writeFile(page.path, page.html); // dist/index.html
 ```
 
 ### Advanced
@@ -67,10 +62,10 @@ import spider from '@chronocide/spider';
 
 const page = await spider({
   outdir: 'dist',
-  properties: { url: 'meta.url' }
+  properties: { url: raw => raw.meta.url }
 })('/src/index.js');
 
-await fsp.writeFile(page.path, page.html);
+await fsp.writeFile(page.path, page.html); // dist/index.html
 ```
 
 ### RSS
@@ -89,7 +84,6 @@ export default `
       <name>John Doe</name>
     </author>
     <id>urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6</id>
-
     <entry>
       <title>Atom-Powered Robots Run Amok</title>
       <link href="http://example.org/2003/12/13/atom03"/>
@@ -108,5 +102,9 @@ import spider from '@chronocide/spider';
 
 const page = await spider({ outdir: 'dist' })('/src/rss.js');
 
-await fsp.writeFile(page.path, page.html);
+await fsp.writeFile(page.path, page.html); // dist/rss.xml
 ```
+
+## API
+
+See [`docs`](/docs/)
