@@ -15,7 +15,7 @@ test('[load.file] loads module from file', async t => {
     const single = await load.file<{ url: string; default: string }>(file);
     t.true(single.default, 'loads module');
 
-    const relative = await load.file('/tmp/single.js');
+    const relative = await load.file(path.normalize('/tmp/single.js'));
     t.true(relative.url, 'loads from relative path');
 
     await fsp.writeFile(file, 'export const url = "/b";\nexport default "<p></p>"');
