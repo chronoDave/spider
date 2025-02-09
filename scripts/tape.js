@@ -2,24 +2,18 @@ import fsp from 'fs/promises';
 import path from 'path';
 
 import { build } from 'esbuild';
-import glob from 'fast-glob';
 
 const outdir = path.resolve(process.cwd(), 'build');
 
+await fsp.rm(outdir, { force: true, recursive: true });
+
 build({
-  entryPoints: glob.sync('src/**/*.spec.ts*', {
-    absolute: true
-  }),
+  entryPoints: ['src/**/*.spec.ts*'],
   bundle: true,
   external: [
-    'tape',
-    'fast-glob'
+    'tape'
   ],
   platform: 'node',
   format: 'esm',
-  outdir,
-  plugins: [{
-    name: 'clean',
-    setup: () => fsp.rm(outdir, { force: true, recursive: true })
-  }]
+  outdir
 });
