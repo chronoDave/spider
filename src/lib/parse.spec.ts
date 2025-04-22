@@ -1,11 +1,11 @@
-import test from 'tape';
+import test from 'node:test';
 import path from 'path';
 import fsp from 'fs/promises';
 
-import parse from './parse';
+import parse from './parse.ts';
 
-test('[parse] parses file', async t => {
-  const root = path.join(process.cwd(), 'tmp');
+await test('[parse] parses file', async t => {
+  const root = path.join(process.cwd(), 'parse');
   const file = path.join(root, 'single.js');
 
   try {
@@ -14,27 +14,23 @@ test('[parse] parses file', async t => {
 
     const result = await parse()(file);
 
-    t.equal(result.url, '/a', 'url');
-    t.equal(result.html, '<p></p>', 'html');
+    t.assert.equal(result.url, '/a', 'url');
+    t.assert.equal(result.html, '<p></p>', 'html');
   } catch (err) {
-    t.fail((err as Error).message);
+    t.assert.fail(err as Error);
   } finally {
     await fsp.rm(root, { recursive: true, force: true });
   }
-
-  t.end();
 });
 
-test('[parse] parses buffer', async t => {
+await test('[parse] parses buffer', async t => {
   const result = await parse()(Buffer.from('export const url = "/";\nexport default "<p></p>"'));
 
-  t.equal(result.url, '/', 'url');
-  t.equal(result.html, '<p></p>', 'html');
-
-  t.end();
+  t.assert.equal(result.url, '/', 'url');
+  t.assert.equal(result.html, '<p></p>', 'html');
 });
 
-test('[parse] accepts options', async t => {
+await test('[parse] accepts options', async t => {
   const result = await parse({
     url: raw => {
       if (typeof raw.meta !== 'object' || raw.meta === null) throw new Error('Invalid export "meta"');
@@ -48,8 +44,6 @@ test('[parse] accepts options', async t => {
     }
   })(Buffer.from('export const meta = { url: "/" };\nexport const b = "<p></p>"'));
 
-  t.equal(result.url, '/', 'url');
-  t.equal(result.html, '<p></p>', 'html');
-
-  t.end();
+  t.assert.equal(result.url, '/', 'url');
+  t.assert.equal(result.html, '<p></p>', 'html');
 });

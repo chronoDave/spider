@@ -1,8 +1,8 @@
-import type { ParseOptions } from './parse';
-import type { PathOptions } from './path';
+import type { ParseOptions } from './parse.ts';
+import type { PathOptions } from './path.ts';
 
-import path from './path';
-import parse from './parse';
+import path from './path.ts';
+import parse from './parse.ts';
 
 export type SpiderOptions = {
   parser?: ParseOptions;

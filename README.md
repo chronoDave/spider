@@ -104,7 +104,3 @@ const page = await spider({ outdir: 'dist' })('/src/rss.js');
 
 await fsp.writeFile(page.path, page.html); // dist/rss.xml
 ```
-
-## API
-
-See [`docs`](/docs/)

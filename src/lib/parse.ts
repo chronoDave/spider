@@ -1,4 +1,4 @@
-import * as load from './load';
+import * as load from './load.ts';
 
 /** Export mapping */
 export type ParseOptions = {
