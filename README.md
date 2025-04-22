@@ -7,7 +7,7 @@
   <a href="https://www.npmjs.com/package/@chronocide/spider">
     <img alt="NPM" src="https://img.shields.io/npm/v/@chronocide/spider?label=npm">
   </a>
-  <img alt="1.15KB" src="https://img.shields.io/badge/gzip-1.15KB-g">
+  <img alt="1.11KB" src="https://img.shields.io/badge/gzip-1.11KB-g">
 </div>
 
 ## Install
