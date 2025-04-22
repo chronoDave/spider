@@ -29,7 +29,7 @@
     "build": "rollup -c",
     "size": "node scripts/size.js",
     "test": "node --experimental-strip-types --test src/**/*.spec.ts --test-reporter=tap --test-concurrency=none",
-    "preversion": "npm run lint:tsc && npm run lint && npm run test && npm run build && npm run size",
+    "preversion": "npm run lint:tsc && npm run lint && npm run test && npm run build && npm run size && git add -A && git commit -m \"Updated README\"",
     "postversion": "npm publish"
   },
   "devDependencies": {
