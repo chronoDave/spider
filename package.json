@@ -28,19 +28,17 @@
     "lint:tsc": "tsc --noEmit",
     "build": "rollup -c",
     "size": "node scripts/size.js",
-    "test": "node --experimental-strip-types --test src/**/*.spec.ts --test-reporter=tap --test-concurrency=none",
+    "test": "node --test src/**/*.spec.ts",
     "preversion": "npm run lint:tsc && npm run lint && npm run test && npm run build && npm run size && git add -A && git commit -m \"Updated README\"",
     "postversion": "npm publish"
   },
+  "optionalDependencies": {
+    "@chronocide/eslint-config": "0.8.1"
+  },
   "devDependencies": {
-    "@chronocide/eslint-config": "github:chronoDave/eslint-config",
-    "@chronocide/package-size": "^0.0.1",
-    "@types/node": "^22.14.1",
-    "esbuild": "^0.25.0",
-    "eslint": "^9.9.0",
-    "rollup": "^4.21.0",
-    "rollup-plugin-dts": "^6.1.1",
-    "rollup-plugin-esbuild": "^6.1.1",
-    "typescript": "^5.5.4"
+    "@types/node": "^25.5.2",
+    "dts-bundle-generator": "^9.5.1",
+    "esbuild": "^0.25.5",
+    "typescript": "^5.2.2"
   }
 }

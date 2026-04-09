@@ -7,12 +7,12 @@
   <a href="https://www.npmjs.com/package/@chronocide/spider">
     <img alt="NPM" src="https://img.shields.io/npm/v/@chronocide/spider?label=npm">
   </a>
-  <img alt="1.11KB" src="https://img.shields.io/badge/gzip-1.11KB-g">
+  <a href="https://www.npmjs.com/package/@chronocide/spider">
+    <img alt="NPM" src="https://img.shields.io/npm/v/@chronocide/spider?label=npm">
+  </a>
 </div>
 
 ## Install
-
-Install using [npm](https://npmjs.org):
 
 ```sh
 npm i @chronocide/spider
@@ -20,7 +20,7 @@ npm i @chronocide/spider
 
 ## Usage
 
-`spider` only supports JavaScript ESM exports. If you wish to use TypeScript, JSX or anything else, your code must be transpiled to JS ESM.
+`spider` only supports JavaScript ESM exports. If you wish to use TypeScript, JSX or anything else, your must transpile your code to JS ESM.
 
 See [@chronocide/esbuild-plugin-spider](https://github.com/chronoDave/esbuild-plugin-spider) for an example.
 
