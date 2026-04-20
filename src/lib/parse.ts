@@ -5,6 +5,7 @@ const string = (label: string) => (x: unknown): string => {
 };
 
 export const title = string('title');
+export const body = string('body');
 
 const stringOrNull = (label: string) => (x: unknown): string | null => {
   if (
@@ -35,3 +36,11 @@ const dateOrNull = (label: string) => (x: unknown): Date | null => {
 
 export const created = dateOrNull('created');
 export const updated = dateOrNull('updated');
+
+export const module = (x: unknown): Record<string, unknown> => {
+  if (typeof x !== 'object') throw new Error('Module is not object');
+  if (x === null) throw new Error('Module is null');
+  if (Array.isArray(x)) throw new Error('Module is array');
+
+  return x as Record<string, unknown>;
+};
