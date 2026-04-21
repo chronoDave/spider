@@ -8,18 +8,18 @@ import * as load from './load.ts';
 test('[load.js]', async t => {
   const tmp = await fsp.mkdtemp(os.tmpdir());
 
-  await fsp.writeFile(path.join(tmp, 'a.js'), 'export default { title: "abc", body: "abc" }');
+  await fsp.writeFile(path.join(tmp, 'a.js'), 'export default { title: "abc", body: () => "abc" }');
   const a = await load.js(tmp)(path.join(tmp, 'a.js'));
 
   t.assert.equal(a.title, 'abc', 'title');
-  t.assert.equal(a.body, 'abc', 'body');
+  t.assert.equal(a.body(new Map()), 'abc', 'body');
   t.assert.equal(a.url, '/abc', 'url');
   t.assert.equal(a.description, null, 'description');
   t.assert.equal(a.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created');
   t.assert.equal(a.updated, null, 'updated');
 
   await fsp.mkdir(path.join(tmp, 'b'));
-  await fsp.writeFile(path.join(tmp, 'b/b.js'), 'export default { title: "abc", description: "abc", created: "2020-01-01", updated: "2021-01-01", body: "abc" }');
+  await fsp.writeFile(path.join(tmp, 'b/b.js'), 'export default { title: "abc", description: "abc", created: "2020-01-01", updated: "2021-01-01", body: () => "abc" }');
   const b = await load.js(tmp)(path.join(tmp, 'b/b.js'));
 
   t.assert.equal(b.description, 'abc', 'description');
@@ -27,7 +27,7 @@ test('[load.js]', async t => {
   t.assert.equal(b.created.getTime(), new Date('2020-01-01').getTime(), 'created');
   t.assert.equal(b.updated?.getTime(), new Date('2021-01-01').getTime(), 'updated');
 
-  await fsp.writeFile(path.join(tmp, 'c.js'), 'export default { title: "abc", body: "abc" }');
+  await fsp.writeFile(path.join(tmp, 'c.js'), 'export default { title: "abc", body: () => "abc" }');
   await fsp.utimes(path.join(tmp, 'c.js'), 0, 0);
   const c = await load.js(tmp)(path.join(tmp, 'c.js'));
 
@@ -44,7 +44,7 @@ test('[load.md]', async t => {
   const a = await load.md(tmp)(path.join(tmp, 'a.md'));
 
   t.assert.equal(a.title, 'abc', 'title');
-  t.assert.equal(a.body, 'abc', 'body');
+  t.assert.equal(a.body(new Map()), 'abc', 'body');
   t.assert.equal(a.url, '/abc', 'url');
   t.assert.equal(a.description, null, 'description');
   t.assert.equal(a.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created');

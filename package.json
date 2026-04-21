@@ -36,9 +36,13 @@
     "@chronocide/eslint-config": "0.8.1"
   },
   "devDependencies": {
+    "@chronocide/spark": "^0.4.1",
     "@types/node": "^25.5.2",
     "dts-bundle-generator": "^9.5.1",
     "esbuild": "^0.25.5",
     "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "runtypes": "^6.7.0"
   }
 }

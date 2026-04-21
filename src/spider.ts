@@ -1,19 +1,9 @@
-import type { Document } from './lib/load.ts';
+import type { Draft } from './lib/load.ts';
 
 import fsp from 'fs/promises';
 import path from 'path';
 
-import * as fs from './lib/fs.ts';
 import * as load from './lib/load.ts';
-
-export type Page = {
-  title: string;
-  description?: string;
-  url?: string;
-  created?: Date;
-  updated?: Date;
-  body: string;
-};
 
 /**
  * 1) Read all files
@@ -34,20 +24,19 @@ export type SpiderOptions = {
 };
 
 export default async (options: SpiderOptions) => {
-  const registry = new Map<string, Document>();
+  const registry = new Map<string, Draft>();
 
   for await (const file of fsp.glob(options.files, { exclude: options.exclude })) {
-    let doc: Document | null = null;
+    let draft: Draft | null = null;
 
-    if (file.endsWith('.md')) doc = await load.md(options.root ?? process.cwd())(file);
-    if (file.endsWith('.js')) doc = await load.js(options.root ?? process.cwd())(file);
-    if (file.endsWith('.ts')) doc = await load.js(options.root ?? process.cwd())(file);
+    if (file.endsWith('.md')) draft = await load.md(options.root ?? process.cwd())(file);
+    if (file.endsWith('.js')) draft = await load.js(options.root ?? process.cwd())(file);
+    if (file.endsWith('.ts')) draft = await load.js(options.root ?? process.cwd())(file);
 
-    if (doc) {
-      if (registry.has(doc.url)) throw new Error('Found duplicate page');
+    if (!draft) throw new Error(`Unknown file type: "${path.parse(file).ext}"`);
+    if (registry.has(draft.url)) throw new Error('Found duplicate page');
 
-      registry.set(doc.url, doc);
-    }
+    registry.set(draft.url, draft);
   }
 
   return registry;
