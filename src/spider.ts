@@ -1,10 +1,19 @@
-import type { Page } from './lib/load.ts';
+import type { Document } from './lib/load.ts';
 
 import fsp from 'fs/promises';
 import path from 'path';
 
 import * as fs from './lib/fs.ts';
 import * as load from './lib/load.ts';
+
+export type Page = {
+  title: string;
+  description?: string;
+  url?: string;
+  created?: Date;
+  updated?: Date;
+  body: string;
+};
 
 /**
  * 1) Read all files
@@ -14,30 +23,30 @@ import * as load from './lib/load.ts';
  */
 
 export type SpiderOptions = {
-  /** Source directories. Will read contents recursively */
-  dirs: string[];
-  /** Output directory */
-  dirout: string;
-  /** If true, disables writing to `dirout`. Default `false` */
-  dry?: boolean;
+  /** File globs */
+  files: string[];
+  /** Filter out files / directories using glob patterns from src */
+  exclude?: string[];
+  /** Base directory */
+  root?: string;
+  /** Output directory. If empty, does not write files */
+  dirout?: string;
 };
 
 export default async (options: SpiderOptions) => {
-  // 1) Read all files
-  const files = await Promise.all(options.dirs.map(fs.files))
-    .then(files => Array.from(new Set(files.flat())));
-  // 1.5) Load all files
-  const pages = await Promise.all<Array<Promise<Page>>>(files.map(async file => {
-    if (file.endsWith('.md')) return load.md(file);
-    return load.js(file);
-  }));
-  // 2) Map url to page
-  const registry = new Map<string, Page>(pages.map(page => [page.url, page]));
-  // 3) Generate HTML
-  if (!options.dry) {
-    for (const [url, page] of registry.entries()) {
-      await fsp.mkdir(path.join(options.dirout, url), { recursive: true });
-      await fsp.writeFile(path.join(options.dirout, url, 'index.html'), page.body);
+  const registry = new Map<string, Document>();
+
+  for await (const file of fsp.glob(options.files, { exclude: options.exclude })) {
+    let doc: Document | null = null;
+
+    if (file.endsWith('.md')) doc = await load.md(options.root ?? process.cwd())(file);
+    if (file.endsWith('.js')) doc = await load.js(options.root ?? process.cwd())(file);
+    if (file.endsWith('.ts')) doc = await load.js(options.root ?? process.cwd())(file);
+
+    if (doc) {
+      if (registry.has(doc.url)) throw new Error('Found duplicate page');
+
+      registry.set(doc.url, doc);
     }
   }
 

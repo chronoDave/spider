@@ -1,10 +1,8 @@
-import Spider from '../src/spider.ts';
+import type { Page } from '../src/spider.ts';
 
-const spider = new Spider({ dirout: 'build' });
-spider.add({
-  url: '/',
-  title: 'spider',
-  content: 'abc'
-});
+const page: Page = {
+  title: 'Home',
+  body: 'This is a page'
+};
 
-spider.build();
+export default page;
