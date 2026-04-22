@@ -3,4 +3,8 @@ export const truncateDay = (x: Date): Date => {
   return x;
 };
 
-export const fromString = (x: string) => new Date(x);
+export const fromString = (x: string) => {
+  const date = new Date(x);
+  if (Number.isNaN(date.getTime())) throw new Error('Invalid date');
+  return date;
+};

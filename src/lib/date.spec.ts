@@ -1,6 +1,13 @@
+import type { TestContext } from 'node:test';
+
 import test from 'node:test';
 
 import * as date from './date.ts';
+
+test('[date.fromString]', (t: TestContext) => {
+  t.assert.throws(() => date.fromString('abc'), 'invalid date');
+  t.assert.ok(date.fromString('2021') instanceof Date, 'valid date');
+});
 
 test('[date.truncateDay]', t => {
   t.assert.equal(

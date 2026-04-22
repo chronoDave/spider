@@ -1,77 +1,49 @@
-import path from 'path';
+import type { PageOptions } from './page.ts';
+
 import fsp from 'fs/promises';
-import r from 'runtypes';
+import { resolve } from 'path';
 
-import { slugify } from './string.ts';
 import * as date from './date.ts';
-import * as p from './path.ts';
+import * as path from './path.ts';
+import * as parse from './parse.ts';
 import { maybe } from './fn.ts';
-
-export type Template = (registry: Map<string, Draft>) => (body: string) => string;
-
-export type Draft = {
-  title: string;
-  description: string | null;
-  /** Relative URL */
-  url: string;
-  /** Truncted to day */
-  created: Date;
-  /** Truncted to day */
-  updated: Date | null;
-  template: Template;
-  body: (registry: Map<string, Draft>) => string;
-};
-
-const page = r.Record({
-  title: r.String,
-  description: r.String.optional(),
-  url: r.String.optional(),
-  created: r.String.optional(),
-  updated: r.String.optional(),
-  template: r.Function.optional(),
-  body: r.Function
-});
-
-export type Page = Omit<r.Static<typeof page>, 'template' | 'body'> & {
-  template: Template;
-  body: (registry: Map<string, Draft>) => string;
-};
+import Page from './page.ts';
 
 export const js = (root: string) =>
-  async (file: string): Promise<Draft> => {
+  async (file: string): Promise<Page> => {
     /**
      * Force cache-busting as Node caches ESM imports by default.
      *
      * @see https://github.com/nodejs/node/issues/49442#issuecomment-1894620232
      */
     const [raw, stat] = await Promise.all([
-      import(`file://${path.resolve(file)}?${Date.now()}`) as Promise<Record<string, unknown>>,
+      import(`file://${resolve(file)}?${Date.now()}`) as Promise<Record<string, unknown>>,
       fsp.stat(file)
     ]);
 
-    /**
-     * Force type conversion as functions cannot be validated statically:
-     *
-     * @see https://github.com/runtypes/runtypes/issues/250#issuecomment-833899333
-     */
-    const { default: module } = r.Record({ default: page }).check(raw) as { default: Page };
+    const module = parse.object('default')(raw.default);
 
-    const created = date.truncateDay(maybe(date.fromString)(module.created) ?? stat.birthtime);
-    const updated = date.truncateDay(maybe(date.fromString)(module.updated) ?? stat.mtime);
+    const title = parse.string('title')(module.title);
+    const description = maybe(parse.string('description'))(module.description);
+    const url = maybe(parse.string('url'))(module.url);
+    const created = date.truncateDay(maybe(date.fromString)(maybe(parse.string('created'))(module.created)) ?? stat.birthtime);
+    const updated = date.truncateDay(maybe(date.fromString)(maybe(parse.string('updated'))(module.updated)) ?? stat.mtime);
+    const template = parse.fn<PageOptions['template']>('template')(module.template);
+    const body = parse.fn<PageOptions['body']>('body')(module.body);
 
-    return {
-      title: module.title,
-      description: module.description ?? null,
-      url: module.url ?? path.posix.join(p.rel(root)(path.dirname(file)), slugify(module.title)),
+    return new Page({
+      title,
+      description,
+      url: url ?? path.url(root)(file)(title),
       created,
       updated: updated.getTime() === created.getTime() ? null : updated,
-      template: module.template,
-      body: module.body
-    };
+      template,
+      body
+    });
   };
 
 export const md = (root: string) =>
-  async (file: string): Promise<Draft> => {
+  async (file: string): Promise<Page> => {
     const [raw, stat] = await Promise.all([
       fsp.readFile(file, 'utf-8'),
       fsp.stat(file)
@@ -80,24 +52,21 @@ export const md = (root: string) =>
     const header = /^-{3,}(.+)-{3,}/gs.exec(raw)?.[1];
     if (typeof header !== 'string') throw new Error('Missing metadata');
 
-    const metadata = r.Record({
-      title: r.String,
-      url: r.String.optional(),
-      description: r.String.optional(),
-      created: r.String.optional(),
-      updated: r.String.optional()
-    }).check(Object.fromEntries(header.split(/\r?\n/).map(line => line.split(':').map(x => x.trim()))));
+    const metadata = Object.fromEntries(header.split(/\r?\n/).map(line => line.split(':').map(x => x.trim()))) as Record<string, string>;
 
-    const created = date.truncateDay(maybe(date.fromString)(metadata.created) ?? stat.birthtime);
-    const updated = date.truncateDay(maybe(date.fromString)(metadata.updated) ?? stat.mtime);
+    const title = parse.string('title')(metadata.title);
+    const description = maybe(parse.string('description'))(metadata.description);
+    const url = maybe(parse.string('url'))(metadata.url);
+    const created = date.truncateDay(maybe(date.fromString)(maybe(parse.string('created'))(metadata.created)) ?? stat.birthtime);
+    const updated = date.truncateDay(maybe(date.fromString)(maybe(parse.string('updated'))(metadata.updated)) ?? stat.mtime);
 
-    return {
-      title: metadata.title,
-      description: metadata.description ?? null,
-      url: metadata.url ?? path.posix.join(p.rel(root)(path.dirname(file)), slugify(metadata.title)),
+    return new Page({
+      title,
+      description,
+      url: url ?? path.url(root)(file)(title),
       created,
       updated: updated.getTime() === created.getTime() ? null : updated,
-      template: () => body => body,
+      template: () => () => '',
       body: () => raw.replace(/^-{3,}.+-{3,}(\r?\n)*/gs, '')
-    };
+    });
   };
