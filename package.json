@@ -21,7 +21,7 @@
     "url": "git+https://github.com/chronoDave/spider.git"
   },
   "engines": {
-    "node": ">=22.13.1"
+    "node": ">=24.13.0"
   },
   "scripts": {
     "lint": "eslint src",
