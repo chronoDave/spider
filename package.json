@@ -40,7 +40,7 @@
     "@types/node": "^25.5.2",
     "dts-bundle-generator": "^9.5.1",
     "esbuild": "^0.25.5",
-    "typescript": "^5.2.2"
+    "typescript": "^6.0.3"
   },
   "dependencies": {
     "runtypes": "^6.7.0"
