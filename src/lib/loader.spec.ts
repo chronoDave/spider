@@ -3,13 +3,13 @@ import path from 'path';
 import fsp from 'fs/promises';
 import os from 'os';
 
-import * as load from './load.ts';
+import * as loader from './loader.ts';
 
-test('[load.js]', async t => {
+test('[loader.js]', async t => {
   const tmp = await fsp.mkdtemp(os.tmpdir());
 
   await fsp.writeFile(path.join(tmp, 'a.js'), 'export default { title: "abc", body: () => "abc", template: () => () => "" }');
-  const a = await load.js(tmp)(path.join(tmp, 'a.js'));
+  const a = await loader.js({ root: tmp, file: path.join(tmp, 'a.js') });
 
   t.assert.equal(a.title, 'abc', 'title');
   t.assert.equal(a.body(), 'abc', 'body');
@@ -20,7 +20,7 @@ test('[load.js]', async t => {
 
   await fsp.mkdir(path.join(tmp, 'b'));
   await fsp.writeFile(path.join(tmp, 'b/b.js'), 'export default { title: "abc", description: "abc", created: "2020-01-01", updated: "2021-01-01", body: () => "abc", template: () => () => "" }');
-  const b = await load.js(tmp)(path.join(tmp, 'b/b.js'));
+  const b = await loader.js({ root: tmp, file: path.join(tmp, 'b/b.js') });
 
   t.assert.equal(b.description, 'abc', 'description');
   t.assert.equal(b.url, '/b/abc');
@@ -29,7 +29,7 @@ test('[load.js]', async t => {
 
   await fsp.writeFile(path.join(tmp, 'c.js'), 'export default { title: "abc", body: () => "abc", template: () => () => "" }');
   await fsp.utimes(path.join(tmp, 'c.js'), 0, 0);
-  const c = await load.js(tmp)(path.join(tmp, 'c.js'));
+  const c = await loader.js({ root: tmp, file: path.join(tmp, 'c.js') });
 
   t.assert.equal(c.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created (utime)');
   t.assert.equal(c.updated?.getTime(), new Date(0).getTime(), 'updated (utime)');
@@ -37,11 +37,11 @@ test('[load.js]', async t => {
   await fsp.rm(tmp, { recursive: true });
 });
 
-test('[load.md]', async t => {
+test('[loader.md]', async t => {
   const tmp = await fsp.mkdtemp(os.tmpdir());
 
   await fsp.writeFile(path.join(tmp, 'a.md'), '---\ntitle:abc\n---abc');
-  const a = await load.md(tmp)(path.join(tmp, 'a.md'));
+  const a = await loader.md({ root: tmp, file: path.join(tmp, 'a.md') });
 
   t.assert.equal(a.title, 'abc', 'title');
   t.assert.equal(a.body(), 'abc', 'body');
@@ -52,7 +52,7 @@ test('[load.md]', async t => {
 
   await fsp.mkdir(path.join(tmp, 'b'));
   await fsp.writeFile(path.join(tmp, 'b/b.md'), '---\ntitle:abc\ndescription:abc\ncreated:2020-01-01\nupdated:2021-01-01\n---abc');
-  const b = await load.md(tmp)(path.join(tmp, 'b/b.md'));
+  const b = await loader.md({ root: tmp, file: path.join(tmp, 'b/b.md') });
 
   t.assert.equal(b.description, 'abc', 'description');
   t.assert.equal(b.url, '/b/abc');
@@ -61,7 +61,7 @@ test('[load.md]', async t => {
 
   await fsp.writeFile(path.join(tmp, 'c.md'), '---\ntitle:abc\n---abc');
   await fsp.utimes(path.join(tmp, 'c.md'), 0, 0);
-  const c = await load.md(tmp)(path.join(tmp, 'c.md'));
+  const c = await loader.md({ root: tmp, file: path.join(tmp, 'c.md') });
 
   t.assert.equal(c.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created (utime)');
   t.assert.equal(c.updated?.getTime(), new Date(0).getTime(), 'updated (utime)');
