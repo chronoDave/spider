@@ -1,4 +1,4 @@
-import type { PageOptions } from './page.ts';
+import type { Page, DocumentOptions } from './document.ts';
 
 import fsp from 'fs/promises';
 import { resolve } from 'path';
@@ -13,7 +13,7 @@ export type LoadContext = {
   file: string;
 };
 
-export type LoadResult = PageOptions;
+export type LoadResult = DocumentOptions;
 
 export type Loader = (context: LoadContext) => Promise<LoadResult>;
 
@@ -33,15 +33,17 @@ export const js: Loader = async context => {
   const title = parse.string('title')(module.title);
   const description = maybe(parse.string('description'))(module.description);
   const url = maybe(parse.string('url'))(module.url);
+  const ext = maybe(parse.string('ext'))(module.ext);
   const created = date.truncateDay(maybe(date.fromString)(maybe(parse.string('created'))(module.created)) ?? stat.birthtime);
   const updated = date.truncateDay(maybe(date.fromString)(maybe(parse.string('updated'))(module.updated)) ?? stat.mtime);
-  const template = parse.fn<PageOptions['template']>('template')(module.template);
-  const body = parse.fn<PageOptions['body']>('body')(module.body);
+  const template = parse.fn<Page['template']>('template')(module.template);
+  const body = parse.fn<Page['body']>('body')(module.body);
 
   return {
     title,
     description,
     url: url ?? path.url(context.root)(context.file)(title),
+    ext: ext ?? '.html',
     created,
     updated: updated.getTime() === created.getTime() ? null : updated,
     template,
@@ -63,6 +65,7 @@ export const md: Loader = async context => {
   const title = parse.string('title')(metadata.title);
   const description = maybe(parse.string('description'))(metadata.description);
   const url = maybe(parse.string('url'))(metadata.url);
+  const ext = maybe(parse.string('ext'))(metadata.ext);
   const created = date.truncateDay(maybe(date.fromString)(maybe(parse.string('created'))(metadata.created)) ?? stat.birthtime);
   const updated = date.truncateDay(maybe(date.fromString)(maybe(parse.string('updated'))(metadata.updated)) ?? stat.mtime);
 
@@ -70,9 +73,10 @@ export const md: Loader = async context => {
     title,
     description,
     url: url ?? path.url(context.root)(context.file)(title),
+    ext: ext ?? '.html',
     created,
     updated: updated.getTime() === created.getTime() ? null : updated,
-    template: () => () => '',
+    template: () => body => body,
     body: () => raw.replace(/^-{3,}.+-{3,}(\r?\n)*/gs, '')
   };
 };

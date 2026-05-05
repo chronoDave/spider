@@ -1,4 +1,4 @@
-import type { Page } from '../src/lib/load.ts';
+import type { Page } from '../src/spider.ts';
 
 import template from './template/root.ts';
 

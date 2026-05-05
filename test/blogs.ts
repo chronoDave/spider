@@ -1,8 +1,8 @@
-import type { Page } from '../src/lib/load.ts';
+import type { Page } from '../src/spider.ts';
 
 const page: Page = {
   title: 'Blogs',
-  template: body => body,
+  template: () => body => body,
   body: () => 'This is a page'
 };
 

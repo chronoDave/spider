@@ -9,7 +9,7 @@ export const string = (label: string) => (x: unknown): string => {
   return x;
 };
 
-export const fn = <T extends (x: unknown) => unknown>(label: string) => (x: unknown): T => {
+export const fn = <T extends Function>(label: string) => (x: unknown): T => {
   if (typeof x !== 'function') throw err(label)('function')(typeof x);
   return x as T;
 };
