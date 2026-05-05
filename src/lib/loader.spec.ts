@@ -17,7 +17,7 @@ test('[loader.js]', async t => {
   t.assert.equal(a.ext, '.html', 'ext');
   t.assert.equal(a.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created');
   t.assert.equal(a.updated, null, 'updated');
-  t.assert.equal(a.body(), 'abc', 'body');
+  t.assert.equal(a.body(new Map()), 'abc', 'body');
 
   await fsp.mkdir(path.join(tmp, 'b'));
   await fsp.writeFile(path.join(tmp, 'b/b.js'), 'export default { title: "abc", description: "abc", created: "2020-01-01", updated: "2021-01-01", body: () => "abc", template: () => () => "" }');
@@ -50,7 +50,7 @@ test('[loader.md]', async t => {
   t.assert.equal(a.ext, '.html', 'ext');
   t.assert.equal(a.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created');
   t.assert.equal(a.updated, null, 'updated');
-  t.assert.equal(a.body(), 'abc', 'body');
+  t.assert.equal(a.body(new Map()), 'abc', 'body');
 
   await fsp.mkdir(path.join(tmp, 'b'));
   await fsp.writeFile(path.join(tmp, 'b/b.md'), '---\ntitle:abc\ndescription:abc\ncreated:2020-01-01\nupdated:2021-01-01\n---abc');
