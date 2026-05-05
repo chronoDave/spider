@@ -37,18 +37,12 @@ declare class Document {
 	/** Render page (template + body) */
 	render(registry: Map<string, Document>): string;
 }
-type LoadContext = {
+export type LoadContext = {
 	root: string;
 	file: string;
 };
-type LoadResult = DocumentOptions;
-type Loader = (context: LoadContext) => Promise<LoadResult>;
-/**
- * 1) Read all files
- * 2) Map url to file
- * 3) Generate HTML
- * 4) Write HTML to disk
- */
+export type LoadResult = DocumentOptions;
+export type Loader = (context: LoadContext) => Promise<LoadResult>;
 export type SpiderOptions = {
 	/** File globs */
 	files: string[];
