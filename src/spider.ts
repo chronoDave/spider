@@ -7,13 +7,7 @@ import Document from './lib/document.ts';
 import * as loader from './lib/loader.ts';
 
 export type { Page, Template } from './lib/document.ts';
-
-/**
- * 1) Read all files
- * 2) Map url to file
- * 3) Generate HTML
- * 4) Write HTML to disk
- */
+export type { Loader, LoadResult, LoadContext } from './lib/loader.ts';
 
 export type SpiderOptions = {
   /** File globs */
