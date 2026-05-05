@@ -1,7 +1,7 @@
 {
   "name": "@chronocide/spider",
   "version": "1.0.0",
-  "description": "Simple static HTML generator",
+  "description": "Tiny static site generator",
   "author": "Chronocide",
   "license": "GPL-3.0",
   "type": "module",
@@ -10,6 +10,12 @@
     "./package.json": "./package.json",
     ".": "./dist/spider.js"
   },
+  "keywords": [
+    "html",
+    "generator",
+    "static",
+    "site"
+  ],
   "files": [
     "dist/**/*"
   ],
