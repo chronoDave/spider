@@ -1,4 +1,4 @@
-import type { Page } from '../src/spider.ts';
+import type { Page } from '../dist/spider.js';
 
 import h from '@chronocide/spark';
 
