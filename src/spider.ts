@@ -5,7 +5,14 @@ import path from 'path';
 
 import * as loader from './lib/loader.ts';
 
-export type { Loader, LoadResult, LoadContext, Template, Body, Page } from './lib/loader.ts';
+export type {
+  Loader,
+  LoadResult,
+  LoadContext,
+  Template,
+  Body,
+  Page
+} from './lib/loader.ts';
 
 export type SpiderOptions = {
   /** File globs */
