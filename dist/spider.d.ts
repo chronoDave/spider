@@ -1,4 +1,5 @@
-export type Template = (registry: Map<string, Document>) => (body: string) => string;
+export type Template = (registry: Map<string, LoadResult>) => (document: LoadResult) => string;
+export type Body = (registry: Map<string, LoadResult>) => string;
 export type Page = {
 	title: string;
 	description?: string;
@@ -7,9 +8,13 @@ export type Page = {
 	created?: string;
 	updated?: string;
 	template: Template;
-	body: (registry: Map<string, Document>) => string;
+	body: Body;
 };
-type DocumentOptions = {
+export type LoadContext = {
+	root: string;
+	file: string;
+};
+export type LoadResult = {
 	title: string;
 	description: string | null;
 	ext: string;
@@ -17,31 +22,8 @@ type DocumentOptions = {
 	created: Date;
 	updated: Date | null;
 	template: Template;
-	body: (registry: Map<string, Document>) => string;
+	body: Body;
 };
-declare class Document {
-	#private;
-	readonly title: string;
-	readonly description: string | null;
-	readonly url: string;
-	readonly created: Date;
-	readonly updated: Date | null;
-	readonly body: (registry: Map<string, Document>) => string;
-	constructor(options: DocumentOptions);
-	/** Return page level */
-	get level(): number;
-	/** Return file directory */
-	get dir(): string;
-	/** Return file url */
-	get file(): string;
-	/** Render page (template + body) */
-	render(registry: Map<string, Document>): string;
-}
-export type LoadContext = {
-	root: string;
-	file: string;
-};
-export type LoadResult = DocumentOptions;
 export type Loader = (context: LoadContext) => Promise<LoadResult>;
 export type SpiderOptions = {
 	/** File globs */
@@ -55,7 +37,7 @@ export type SpiderOptions = {
 	/** File loaders */
 	loader?: Record<string, Loader>;
 };
-declare const _default: (options: SpiderOptions) => Promise<Map<string, Document>>;
+declare const _default: (options: SpiderOptions) => Promise<Map<string, LoadResult>>;
 
 export {
 	_default as default,

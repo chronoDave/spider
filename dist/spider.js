@@ -6,54 +6,7 @@ var __export = (target, all) => {
 
 // src/spider.ts
 import fsp2 from "fs/promises";
-import path3 from "path";
-
-// src/lib/document.ts
-import path from "path";
-
-// src/lib/string.ts
-var slugify = (x) => x.trim().replace(/\s+/g, "-").normalize("NFD").replace(/(\p{Diacritic})|[^A-Za-z0-9-]/gu, "").replace(/-+/g, "-").toLocaleLowerCase();
-var count = (needle) => (haystack) => haystack.match(new RegExp(RegExp.escape(needle), "g"))?.length ?? 0;
-
-// src/lib/document.ts
-var Document = class {
-  title;
-  description;
-  url;
-  created;
-  updated;
-  body;
-  #template;
-  #ext;
-  constructor(options) {
-    this.#template = options.template;
-    this.#ext = options.ext;
-    this.title = options.title;
-    this.description = options.description;
-    this.url = options.url;
-    this.created = options.created;
-    this.updated = options.updated;
-    this.body = options.body;
-  }
-  /** Return page level */
-  get level() {
-    return count("/")(this.url);
-  }
-  /** Return file directory */
-  get dir() {
-    return path.dirname(this.file);
-  }
-  /** Return file url */
-  get file() {
-    let url2 = this.url;
-    if (url2.endsWith("/")) url2 = `${url2}index`;
-    return `${url2}${this.#ext}`;
-  }
-  /** Render page (template + body) */
-  render(registry) {
-    return this.#template(registry)(this.body(registry));
-  }
-};
+import path2 from "path";
 
 // src/lib/loader.ts
 var loader_exports = {};
@@ -76,13 +29,18 @@ var fromString = (x) => {
 };
 
 // src/lib/path.ts
-import path2 from "path";
+import path from "path";
+
+// src/lib/string.ts
+var slugify = (x) => x.trim().replace(/\s+/g, "-").normalize("NFD").replace(/(\p{Diacritic})|[^A-Za-z0-9-]/gu, "").replace(/-+/g, "-").toLocaleLowerCase();
+
+// src/lib/path.ts
 var rel = (root) => (file) => {
-  const rel2 = file.replace(root, "").replaceAll(path2.win32.sep, path2.posix.sep);
+  const rel2 = file.replace(root, "").replaceAll(path.win32.sep, path.posix.sep);
   if (rel2.length === 0) return "/";
   return rel2;
 };
-var url = (root) => (file) => (title) => path2.posix.join(rel(root)(path2.dirname(file)), slugify(title));
+var url = (root) => (file) => (title) => path.posix.join(rel(root)(path.dirname(file)), slugify(title));
 
 // src/lib/parse.ts
 var err = (label) => (expected) => (actual) => new Error(`Failed to parse "${label}"`, {
@@ -157,7 +115,7 @@ var md = async (context) => {
     ext: ext ?? ".html",
     created,
     updated: updated.getTime() === created.getTime() ? null : updated,
-    template: () => (body) => body,
+    template: (registry) => (document) => document.body(registry),
     body: () => raw.replace(/^-{3,}.+-{3,}(\r?\n)*/gs, "")
   };
 };
@@ -173,15 +131,17 @@ var spider_default = async (options) => {
   if (options.loader) Object.entries(loader_exports).forEach(([ext, loader]) => loaders.set(ext, loader));
   for await (const file of fsp2.glob(options.files, { exclude: options.exclude })) {
     const err2 = (reason) => new Error(`Failed to load page "${file}"`, { cause: new Error(reason) });
-    const result = await loaders.get(path3.extname(file))?.({ root, file });
-    if (!result) throw err2(`Unknown file type "${path3.extname(file)}"`);
+    const result = await loaders.get(path2.extname(file))?.({ root, file });
+    if (!result) throw err2(`Unknown file type "${path2.extname(file)}"`);
     if (registry.has(result.url)) throw err2(`Page already exists with url "${result.url}"`);
-    registry.set(result.url, new Document(result));
+    registry.set(result.url, result);
   }
   if (typeof options.dirout === "string") {
-    for (const page of registry.values()) {
-      await fsp2.mkdir(path3.join(options.dirout, page.dir), { recursive: true });
-      await fsp2.writeFile(path3.join(options.dirout, page.file), page.render(registry));
+    for (const result of registry.values()) {
+      let url2 = result.url;
+      if (url2.endsWith("/")) url2 = `${url2}index`;
+      await fsp2.mkdir(path2.join(options.dirout, path2.dirname(result.url)), { recursive: true });
+      await fsp2.writeFile(path2.join(options.dirout, `${url2}${result.ext}`), result.template(registry)(result));
     }
   }
   return registry;

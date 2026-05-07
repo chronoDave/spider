@@ -1,5 +1,3 @@
-import type { Page, DocumentOptions } from './document.ts';
-
 import fsp from 'fs/promises';
 import { resolve } from 'path';
 
@@ -8,12 +6,36 @@ import * as path from './path.ts';
 import * as parse from './parse.ts';
 import { maybe } from './fn.ts';
 
+export type Template = (registry: Map<string, LoadResult>) => (document: LoadResult) => string;
+
+export type Body = (registry: Map<string, LoadResult>) => string;
+
+export type Page = {
+  title: string;
+  description?: string;
+  ext?: string;
+  url?: string;
+  created?: string;
+  updated?: string;
+  template: Template;
+  body: Body;
+};
+
 export type LoadContext = {
   root: string;
   file: string;
 };
 
-export type LoadResult = DocumentOptions;
+export type LoadResult = {
+  title: string;
+  description: string | null;
+  ext: string;
+  url: string;
+  created: Date;
+  updated: Date | null;
+  template: Template;
+  body: Body;
+};
 
 export type Loader = (context: LoadContext) => Promise<LoadResult>;
 
@@ -76,7 +98,7 @@ export const md: Loader = async context => {
     ext: ext ?? '.html',
     created,
     updated: updated.getTime() === created.getTime() ? null : updated,
-    template: () => body => body,
+    template: registry => document => document.body(registry),
     body: () => raw.replace(/^-{3,}.+-{3,}(\r?\n)*/gs, '')
   };
 };

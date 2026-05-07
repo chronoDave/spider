@@ -1,8 +1,8 @@
-import type { Page } from '../dist/spider.js';
+import type { Page } from '../src/spider.js';
 
 const page: Page = {
   title: 'Blogs',
-  template: () => body => body,
+  template: registry => document => document.body(registry),
   body: () => 'This is a page'
 };
 

@@ -1,13 +1,11 @@
-import type { Loader } from './lib/loader.ts';
+import type { Loader, LoadResult } from './lib/loader.ts';
 
 import fsp from 'fs/promises';
 import path from 'path';
 
-import Document from './lib/document.ts';
 import * as loader from './lib/loader.ts';
 
-export type { Page, Template } from './lib/document.ts';
-export type { Loader, LoadResult, LoadContext } from './lib/loader.ts';
+export type { Loader, LoadResult, LoadContext, Template, Body, Page } from './lib/loader.ts';
 
 export type SpiderOptions = {
   /** File globs */
@@ -23,7 +21,7 @@ export type SpiderOptions = {
 };
 
 export default async (options: SpiderOptions) => {
-  const registry = new Map<string, Document>();
+  const registry = new Map<string, LoadResult>();
   const root = options.root ?? process.cwd();
   const loaders = new Map<string, Loader>();
 
@@ -38,13 +36,16 @@ export default async (options: SpiderOptions) => {
     if (!result) throw err(`Unknown file type "${path.extname(file)}"`);
     if (registry.has(result.url)) throw err(`Page already exists with url "${result.url}"`);
 
-    registry.set(result.url, new Document(result));
+    registry.set(result.url, result);
   }
 
   if (typeof options.dirout === 'string') {
-    for (const page of registry.values()) {
-      await fsp.mkdir(path.join(options.dirout, page.dir), { recursive: true });
-      await fsp.writeFile(path.join(options.dirout, page.file), page.render(registry));
+    for (const result of registry.values()) {
+      let url = result.url;
+      if (url.endsWith('/')) url = `${url}index`;
+
+      await fsp.mkdir(path.join(options.dirout, path.dirname(result.url)), { recursive: true });
+      await fsp.writeFile(path.join(options.dirout, `${url}${result.ext}`), result.template(registry)(result));
     }
   }
 

@@ -54,7 +54,16 @@ export type LoadContext = {
 ```
 
 ```ts
-export type LoadResult = DocumentOptions;
+export type LoadResult = {
+  title: string;
+  description: string | null;
+  ext: string;
+  url: string;
+  created: Date;
+  updated: Date | null;
+  template: Template;
+  body: Body;
+};
 ```
 
 ```ts
@@ -93,8 +102,8 @@ const loader: Loader = async context => ({
   ext: '.html',
   created: new Date(),
   updated: null,
-  template: () => () => '',
-  body: () => 'body'
+  template: registry => document => document.body(registry),
+  body: registry => `<a href="${registry.get('/').title}">Home</a>`
 });
 
 await spider({
