@@ -12,7 +12,7 @@
 
 ---
 
-`spider` is a tiny TypeScript static site generator meant for small personal websites. It uses a modular plugin system for maximum flexibility.
+`spider` is a tiny TypeScript static site generator (SSR) meant for small personal websites. It uses a modular plugin system for maximum flexibility.
 
 ## Features
 
@@ -20,6 +20,10 @@
 - No templating language, uses plain JS/TS
 - Modular loaders, allowing any file type to be used
 - Flexible API, every page has full access to the whole website allowing for the creation of RSS feeds, collection pages, etc.
+- Sensible defaults
+  - Markdown file URL's are generated based on folder structure and blog post title (`/<folder>/<title>`)
+  - Creation and update dates are truncated to days
+  - Output files are HTML
 
 ## Installation
 
@@ -42,6 +46,34 @@ await spider({
   dirout: 'build',
   exclude: ['**/*.spec.ts']
 });
+```
+
+```ts
+import type { Template, Page } from '@chronocide/spider';
+
+import h from '@chronocide/spark';
+
+const template: Template = registry =>
+  document => {
+    const template = h('html')({ lang: 'en-GB' })(
+      h('head')()(h('title')()()),
+      h('body')()(document.body(registry))
+    );
+
+    return `<!DOCTYPE html>${template}`;
+  };
+
+const page: Page = {
+  title: 'Home',
+  url: '/',
+  template,
+  body: registry => h('main')()(
+    h('p')()('This is a page'),
+    h('a')({ href: registry.get('/about')?.url })(registry.get('/about')?.title)
+  )
+};
+
+export default page;
 ```
 
 ##### `SpiderOptions`
