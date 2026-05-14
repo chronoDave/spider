@@ -1,3 +1,5 @@
+import type { Body, PageOptions, Template } from './page.ts';
+
 import fsp from 'fs/promises';
 import { resolve } from 'path';
 
@@ -6,48 +8,17 @@ import * as path from './path.ts';
 import * as parse from './parse.ts';
 import { maybe } from './fn.ts';
 
-export type Template = (registry: Map<string, LoadResult>) => (document: LoadResult) => string;
+export type Loader = (root: string) => (file: string) => Promise<PageOptions>;
 
-export type Body = (registry: Map<string, LoadResult>) => string;
-
-export type Page = {
-  title: string;
-  description?: string;
-  ext?: string;
-  url?: string;
-  created?: string;
-  updated?: string;
-  template: Template;
-  body: Body;
-};
-
-export type LoadContext = {
-  root: string;
-  file: string;
-};
-
-export type LoadResult = {
-  title: string;
-  description: string | null;
-  ext: string;
-  url: string;
-  created: Date;
-  updated: Date | null;
-  template: Template;
-  body: Body;
-};
-
-export type Loader = (context: LoadContext) => Promise<LoadResult>;
-
-export const js: Loader = async context => {
+export const js: Loader = root => async file => {
   /**
    * Force cache-busting as Node caches ESM imports by default.
    *
    * @see https://github.com/nodejs/node/issues/49442#issuecomment-1894620232
    */
   const [raw, stat] = await Promise.all([
-    import(`file://${resolve(context.file)}?${Date.now()}`) as Promise<Record<string, unknown>>,
-    fsp.stat(context.file)
+    import(`file://${resolve(file)}?${Date.now()}`) as Promise<Record<string, unknown>>,
+    fsp.stat(file)
   ]);
 
   const module = parse.object('default')(raw.default);
@@ -58,13 +29,13 @@ export const js: Loader = async context => {
   const ext = maybe(parse.string('ext'))(module.ext);
   const created = date.truncateDay(maybe(date.fromString)(maybe(parse.string('created'))(module.created)) ?? stat.birthtime);
   const updated = date.truncateDay(maybe(date.fromString)(maybe(parse.string('updated'))(module.updated)) ?? stat.mtime);
-  const template = parse.fn<Page['template']>('template')(module.template);
-  const body = parse.fn<Page['body']>('body')(module.body);
+  const template = parse.fn<Template>('template')(module.template);
+  const body = parse.fn<Body>('body')(module.body);
 
   return {
     title,
     description,
-    url: url ?? path.url(context.root)(context.file)(title),
+    url: url ?? path.url(root)(file)(title),
     ext: ext ?? '.html',
     created,
     updated: updated.getTime() === created.getTime() ? null : updated,
@@ -73,10 +44,10 @@ export const js: Loader = async context => {
   };
 };
 
-export const md: Loader = async context => {
+export const md: Loader = root => async file => {
   const [raw, stat] = await Promise.all([
-    fsp.readFile(context.file, 'utf-8'),
-    fsp.stat(context.file)
+    fsp.readFile(file, 'utf-8'),
+    fsp.stat(file)
   ]);
 
   const header = /^-{3,}(.+)-{3,}/gs.exec(raw)?.[1];
@@ -94,7 +65,7 @@ export const md: Loader = async context => {
   return {
     title,
     description,
-    url: url ?? path.url(context.root)(context.file)(title),
+    url: url ?? path.url(root)(file)(title),
     ext: ext ?? '.html',
     created,
     updated: updated.getTime() === created.getTime() ? null : updated,

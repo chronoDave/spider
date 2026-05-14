@@ -1,18 +1,19 @@
-import type { Loader, LoadResult } from './lib/loader.ts';
+import type { Loader } from './lib/loader.ts';
 
+import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
 
+import Page from './lib/page.ts';
 import * as loader from './lib/loader.ts';
 
+export type { Loader } from './lib/loader.ts';
 export type {
-  Loader,
-  LoadResult,
-  LoadContext,
   Template,
   Body,
-  Page
-} from './lib/loader.ts';
+  Draft,
+  PageOptions
+} from './lib/page.ts';
 
 export type SpiderOptions = {
   /** File globs */
@@ -27,34 +28,69 @@ export type SpiderOptions = {
   loader?: Record<string, Loader>;
 };
 
-export default async (options: SpiderOptions) => {
-  const registry = new Map<string, LoadResult>();
-  const root = options.root ?? process.cwd();
-  const loaders = new Map<string, Loader>();
+export default class Spider {
+  readonly #files: string[];
+  readonly #exclude: string[];
+  readonly #dirout: string | null;
+  readonly #root: string;
+  readonly #loaders: Map<string, ReturnType<Loader>>;
+  readonly #registry: Map<string, Page>;
 
-  loaders.set('.md', loader.md);
-  loaders.set('.js', loader.js);
-  loaders.set('.ts', loader.js);
-  if (options.loader) Object.entries(loader).forEach(([ext, loader]) => loaders.set(ext, loader));
-
-  for await (const file of fsp.glob(options.files, { exclude: options.exclude })) {
-    const err = (reason: string) => new Error(`Failed to load page "${file}"`, { cause: new Error(reason) });
-    const result = await loaders.get(path.extname(file))?.({ root, file });
-    if (!result) throw err(`Unknown file type "${path.extname(file)}"`);
-    if (registry.has(result.url)) throw err(`Page already exists with url "${result.url}"`);
-
-    registry.set(result.url, result);
-  }
-
-  if (typeof options.dirout === 'string') {
-    for (const result of registry.values()) {
-      let url = result.url;
-      if (url.endsWith('/')) url = `${url}index`;
-
-      await fsp.mkdir(path.join(options.dirout, path.dirname(result.url)), { recursive: true });
-      await fsp.writeFile(path.join(options.dirout, `${url}${result.ext}`), result.template(registry)(result));
+  private async _write() {
+    if (typeof this.#dirout !== 'string') return this.#registry;
+    for (const page of this.#registry.values()) {
+      await fsp.mkdir(path.join(this.#dirout, page.dir), { recursive: true });
+      await fsp.writeFile(path.join(this.#dirout, page.file), page.render(this.#registry));
     }
+
+    return this.#registry;
   }
 
-  return registry;
-};
+  private async _load(file: string) {
+    const err = (reason: string) => new Error(`Failed to load page "${file}"`, { cause: new Error(reason) });
+
+    const draft = await this.#loaders.get(path.extname(file))?.(file);
+    if (!draft) throw err(`Unknown file type "${path.extname(file)}"`);
+    if (this.#registry.has(draft.url)) throw err(`Page already exists with url "${draft.url}"`);
+
+    this.#registry.set(draft.url, new Page(draft));
+  }
+
+  constructor(options: SpiderOptions) {
+    this.#files = options.files;
+    this.#registry = new Map();
+    this.#root = options.root ?? process.cwd();
+    this.#exclude = options.exclude ?? [];
+    this.#dirout = options.dirout ?? null;
+
+    this.#loaders = new Map();
+    this.#loaders.set('.js', loader.js(this.#root));
+    this.#loaders.set('.ts', loader.js(this.#root));
+    this.#loaders.set('.md', loader.md(this.#root));
+    if (options.loader) Object.entries(loader).forEach(([ext, loader]) => this.#loaders.set(ext, loader(this.#root)));
+  }
+
+  async build() {
+    for await (const file of fsp.glob(this.#files, { exclude: this.#exclude })) this._load(file);
+
+    return this._write();
+  }
+
+  async watch() {
+    const controller = new AbortController();
+
+    for await (const file of fsp.glob(this.#files, { exclude: this.#exclude })) {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      fs.watch(file, { signal: controller.signal }, async (event, watched) => {
+        if (typeof watched !== 'string') return;
+        if (event === 'rename') this.#registry.delete(watched);
+
+        await this._load(watched);
+        await this._write();
+      });
+    }
+
+    return () => controller.abort();
+  }
+}
+
