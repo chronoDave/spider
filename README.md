@@ -38,14 +38,16 @@ npm i @chronocide/spider
 Builds static site
 
 ```ts
-import spider from '@chronocide/spark';
+import Spider from '@chronocide/spark';
 
-await spider({
+const spider = new Spider({
   files: ['src/**/*.ts', 'src/**/*.md'],
   root: 'src',
   dirout: 'build',
   exclude: ['**/*.spec.ts']
 });
+
+spider.build();
 ```
 
 ```ts
@@ -125,7 +127,7 @@ Loaders are used to load different file types. By default, `spider` supports loa
 ```ts
 import type { Loader } from '@chronocide/spider';
 
-import spider from '@chronocide/spider';
+import Spider from '@chronocide/spider';
 
 const loader: Loader = async context => ({
   title: 'loader',
@@ -138,7 +140,7 @@ const loader: Loader = async context => ({
   body: registry => `<a href="${registry.get('/').title}">Home</a>`
 });
 
-await spider({
+const spider = new Spider({
   files: ['src/**/*.ts', 'src/**/*.md'],
   root: 'src',
   dirout: 'build',
@@ -148,4 +150,6 @@ await spider({
     '.ts': loader
   }
 });
+
+spider.build();
 ```

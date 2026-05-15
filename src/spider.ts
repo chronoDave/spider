@@ -1,6 +1,5 @@
 import type { Loader } from './lib/loader.ts';
 
-import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
 
@@ -36,26 +35,6 @@ export default class Spider {
   readonly #loaders: Map<string, ReturnType<Loader>>;
   readonly #registry: Map<string, Page>;
 
-  private async _write() {
-    if (typeof this.#dirout !== 'string') return this.#registry;
-    for (const page of this.#registry.values()) {
-      await fsp.mkdir(path.join(this.#dirout, page.dir), { recursive: true });
-      await fsp.writeFile(path.join(this.#dirout, page.file), page.render(this.#registry));
-    }
-
-    return this.#registry;
-  }
-
-  private async _load(file: string) {
-    const err = (reason: string) => new Error(`Failed to load page "${file}"`, { cause: new Error(reason) });
-
-    const draft = await this.#loaders.get(path.extname(file))?.(file);
-    if (!draft) throw err(`Unknown file type "${path.extname(file)}"`);
-    if (this.#registry.has(draft.url)) throw err(`Page already exists with url "${draft.url}"`);
-
-    this.#registry.set(draft.url, new Page(draft));
-  }
-
   constructor(options: SpiderOptions) {
     this.#files = options.files;
     this.#registry = new Map();
@@ -70,27 +49,33 @@ export default class Spider {
     if (options.loader) Object.entries(loader).forEach(([ext, loader]) => this.#loaders.set(ext, loader(this.#root)));
   }
 
-  async build() {
-    for await (const file of fsp.glob(this.#files, { exclude: this.#exclude })) this._load(file);
-
-    return this._write();
-  }
-
-  async watch() {
-    const controller = new AbortController();
-
-    for await (const file of fsp.glob(this.#files, { exclude: this.#exclude })) {
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      fs.watch(file, { signal: controller.signal }, async (event, watched) => {
-        if (typeof watched !== 'string') return;
-        if (event === 'rename') this.#registry.delete(watched);
-
-        await this._load(watched);
-        await this._write();
-      });
+  /** Write registry to `dirout` */
+  async write() {
+    if (typeof this.#dirout !== 'string') return this.#registry;
+    for (const page of this.#registry.values()) {
+      await fsp.mkdir(path.join(this.#dirout, page.dir), { recursive: true });
+      await fsp.writeFile(path.join(this.#dirout, page.file), page.render(this.#registry));
     }
 
-    return () => controller.abort();
+    return this.#registry;
+  }
+
+  /** Load file into registry */
+  async load(file: string) {
+    const err = (reason: string) => new Error(`Failed to load page "${file}"`, { cause: new Error(reason) });
+
+    const draft = await this.#loaders.get(path.extname(file))?.(file);
+    if (!draft) throw err(`Unknown file type "${path.extname(file)}"`);
+    if (this.#registry.has(draft.url)) throw err(`Page already exists with url "${draft.url}"`);
+
+    this.#registry.set(draft.url, new Page(draft));
+  }
+
+  /** Build project */
+  async build() {
+    for await (const file of fsp.glob(this.#files, { exclude: this.#exclude })) this.load(file);
+
+    return this.write();
   }
 }
 
