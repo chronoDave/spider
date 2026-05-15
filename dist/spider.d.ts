@@ -1,6 +1,6 @@
-export type Template = (registry: Map<string, LoadResult>) => (document: LoadResult) => string;
-export type Body = (registry: Map<string, LoadResult>) => string;
-export type Page = {
+export type Template = (registry: Map<string, Page>) => (page: Page) => string;
+export type Body = (registry: Map<string, Page>) => string;
+export type Draft = {
 	title: string;
 	description?: string;
 	ext?: string;
@@ -10,11 +10,7 @@ export type Page = {
 	template: Template;
 	body: Body;
 };
-export type LoadContext = {
-	root: string;
-	file: string;
-};
-export type LoadResult = {
+export type PageOptions = {
 	title: string;
 	description: string | null;
 	ext: string;
@@ -24,7 +20,21 @@ export type LoadResult = {
 	template: Template;
 	body: Body;
 };
-export type Loader = (context: LoadContext) => Promise<LoadResult>;
+declare class Page {
+	readonly title: string;
+	readonly description: string | null;
+	readonly ext: string;
+	readonly url: string;
+	readonly created: Date;
+	readonly updated: Date | null;
+	readonly body: Body;
+	readonly template: Template;
+	readonly file: string;
+	readonly dir: string;
+	constructor(options: PageOptions);
+	render(registry: Map<string, Page>): string;
+}
+export type Loader = (root: string) => (file: string) => Promise<PageOptions>;
 export type SpiderOptions = {
 	/** File globs */
 	files: string[];
@@ -37,10 +47,19 @@ export type SpiderOptions = {
 	/** File loaders */
 	loader?: Record<string, Loader>;
 };
-declare const _default: (options: SpiderOptions) => Promise<Map<string, LoadResult>>;
+declare class Spider {
+	#private;
+	constructor(options: SpiderOptions);
+	/** Write registry to `dirout` */
+	write(): Promise<Map<string, Page>>;
+	/** Load file into registry */
+	load(file: string): Promise<void>;
+	/** Build project */
+	build(): Promise<Map<string, Page>>;
+}
 
 export {
-	_default as default,
+	Spider as default,
 };
 
 export {};
