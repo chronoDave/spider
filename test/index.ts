@@ -1,10 +1,10 @@
-import type { Page } from '../src/spider.js';
+import type { Draft } from '../src/spider.ts';
 
 import h from '@chronocide/spark';
 
 import template from './template/root.ts';
 
-const page: Page = {
+const page: Draft = {
   title: 'Home',
   url: '/',
   template,
