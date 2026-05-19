@@ -1,5 +1,6 @@
-export type Template = (registry: Map<string, Page>) => (page: Page) => string;
-export type Body = (registry: Map<string, Page>) => string;
+export type Registry = Map<string, Page>;
+export type Template = (registry: Registry) => (page: Page) => string;
+export type Body = (registry: Registry) => string;
 export type Draft = {
 	title: string;
 	description?: string;
@@ -20,7 +21,7 @@ export type PageOptions = {
 	template: Template;
 	body: Body;
 };
-declare class Page {
+export declare class Page {
 	readonly title: string;
 	readonly description: string | null;
 	readonly ext: string;
@@ -32,7 +33,7 @@ declare class Page {
 	readonly file: string;
 	readonly dir: string;
 	constructor(options: PageOptions);
-	render(registry: Map<string, Page>): string;
+	render(registry: Registry): string;
 }
 export type Loader = (root: string) => (file: string) => Promise<PageOptions>;
 export type SpiderOptions = {
@@ -51,11 +52,11 @@ declare class Spider {
 	#private;
 	constructor(options: SpiderOptions);
 	/** Write registry to `dirout` */
-	write(): Promise<Map<string, Page>>;
+	write(): Promise<Registry>;
 	/** Load file into registry */
 	load(file: string): Promise<void>;
 	/** Build project */
-	build(): Promise<Map<string, Page>>;
+	build(): Promise<Registry>;
 }
 
 export {

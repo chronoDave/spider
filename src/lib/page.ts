@@ -1,8 +1,10 @@
 import path from 'path';
 
-export type Template = (registry: Map<string, Page>) => (page: Page) => string;
+export type Registry = Map<string, Page>;
 
-export type Body = (registry: Map<string, Page>) => string;
+export type Template = (registry: Registry) => (page: Page) => string;
+
+export type Body = (registry: Registry) => string;
 
 export type Draft = {
   title: string;
@@ -55,7 +57,7 @@ export default class Page {
     this.dir = path.dirname(this.file);
   }
 
-  render(registry: Map<string, Page>): string {
+  render(registry: Registry): string {
     return this.template(registry)(this);
   }
 }

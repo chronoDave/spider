@@ -1,4 +1,5 @@
 import type { Loader } from './lib/loader.ts';
+import type { Registry } from './lib/page.ts';
 
 import fsp from 'fs/promises';
 import path from 'path';
@@ -8,11 +9,13 @@ import * as loader from './lib/loader.ts';
 
 export type { Loader } from './lib/loader.ts';
 export type {
+  Registry,
   Template,
   Body,
   Draft,
   PageOptions
 } from './lib/page.ts';
+export type { Page };
 
 export type SpiderOptions = {
   /** File globs */
@@ -33,7 +36,7 @@ export default class Spider {
   readonly #dirout: string | null;
   readonly #root: string;
   readonly #loaders: Map<string, ReturnType<Loader>>;
-  readonly #registry: Map<string, Page>;
+  readonly #registry: Registry;
 
   constructor(options: SpiderOptions) {
     this.#files = options.files;
