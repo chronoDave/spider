@@ -13,8 +13,8 @@ export type Draft = {
   url?: string;
   created?: string;
   updated?: string;
-  template: Template;
-  body: Body;
+  template?: Template;
+  body?: Body;
 };
 
 export type PageOptions = {

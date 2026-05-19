@@ -29,8 +29,8 @@ export const js: Loader = root => async file => {
   const ext = maybe(parse.string('ext'))(module.ext);
   const created = date.truncateDay(maybe(date.fromString)(maybe(parse.string('created'))(module.created)) ?? stat.birthtime);
   const updated = date.truncateDay(maybe(date.fromString)(maybe(parse.string('updated'))(module.updated)) ?? stat.mtime);
-  const template = parse.fn<Template>('template')(module.template);
-  const body = parse.fn<Body>('body')(module.body);
+  const template = maybe(parse.fn<Template>('template'))(module.template);
+  const body = maybe(parse.fn<Body>('body'))(module.body);
 
   return {
     title,

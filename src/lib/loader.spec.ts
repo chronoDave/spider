@@ -28,10 +28,12 @@ test('[loader.js]', async t => {
   t.assert.equal(b.created.getTime(), new Date('2020-01-01').getTime(), 'created');
   t.assert.equal(b.updated?.getTime(), new Date('2021-01-01').getTime(), 'updated');
 
-  await fsp.writeFile(path.join(tmp, 'c.js'), 'export default { title: "abc", body: () => "abc", template: () => () => "" }');
+  await fsp.writeFile(path.join(tmp, 'c.js'), 'export default { title: "abc" }');
   await fsp.utimes(path.join(tmp, 'c.js'), 0, 0);
   const c = await loader.js(tmp)(path.join(tmp, 'c.js'));
 
+  t.assert.equal(c.body, null);
+  t.assert.equal(c.template, null);
   t.assert.equal(c.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created (utime)');
   t.assert.equal(c.updated?.getTime(), new Date(0).getTime(), 'updated (utime)');
 
