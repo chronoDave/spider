@@ -24,8 +24,8 @@ export type PageOptions = {
   url: string;
   created: Date;
   updated: Date | null;
-  template: Template;
-  body: Body;
+  template: Template | null;
+  body: Body | null;
 };
 
 export default class Page {
@@ -35,8 +35,8 @@ export default class Page {
   readonly url: string;
   readonly created: Date;
   readonly updated: Date | null;
-  readonly body: Body;
-  readonly template: Template;
+  readonly body: Body | null;
+  readonly template: Template | null;
   readonly file: string;
   readonly dir: string;
 
@@ -58,6 +58,6 @@ export default class Page {
   }
 
   render(registry: Registry): string {
-    return this.template(registry)(this);
+    return this.template?.(registry)(this) ?? '';
   }
 }
