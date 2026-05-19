@@ -113,8 +113,8 @@ var js = (root) => async (file) => {
   const ext = maybe(string("ext"))(module.ext);
   const created = truncateDay(maybe(fromString)(maybe(string("created"))(module.created)) ?? stat.birthtime);
   const updated = truncateDay(maybe(fromString)(maybe(string("updated"))(module.updated)) ?? stat.mtime);
-  const template = fn("template")(module.template);
-  const body = fn("body")(module.body);
+  const template = maybe(fn("template"))(module.template);
+  const body = maybe(fn("body"))(module.body);
   return {
     title,
     description,
