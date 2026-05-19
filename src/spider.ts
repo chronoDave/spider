@@ -15,7 +15,7 @@ export type {
   Draft,
   PageOptions
 } from './lib/page.ts';
-export type { Page };
+export { Page };
 
 export type SpiderOptions = {
   /** File globs */

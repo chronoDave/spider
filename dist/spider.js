@@ -196,5 +196,6 @@ var Spider = class {
   }
 };
 export {
+  Page,
   Spider as default
 };
