@@ -1,6 +1,6 @@
 export type Registry = Map<string, Page>;
-export type Template = (registry: Registry) => (page: Page) => string;
-export type Body = (registry: Registry) => string;
+export type Template = (registry: Registry) => (page: Page) => string | null;
+export type Body = (registry: Registry) => string | null;
 export type Draft = {
 	title: string;
 	description?: string;
@@ -18,8 +18,8 @@ export type PageOptions = {
 	url: string;
 	created: Date;
 	updated: Date | null;
-	template: Template;
-	body: Body;
+	template: Template | null;
+	body: Body | null;
 };
 export declare class Page {
 	readonly title: string;
@@ -28,8 +28,8 @@ export declare class Page {
 	readonly url: string;
 	readonly created: Date;
 	readonly updated: Date | null;
-	readonly body: Body;
-	readonly template: Template;
+	readonly body: Body | null;
+	readonly template: Template | null;
 	readonly file: string;
 	readonly dir: string;
 	constructor(options: PageOptions);

@@ -36,7 +36,7 @@ var Page = class {
     this.dir = path.dirname(this.file);
   }
   render(registry) {
-    return this.template(registry)(this);
+    return this.template?.(registry)(this) ?? "";
   }
 };
 
@@ -147,7 +147,7 @@ var md = (root) => async (file) => {
     ext: ext ?? ".html",
     created,
     updated: updated.getTime() === created.getTime() ? null : updated,
-    template: (registry) => (document) => document.body(registry),
+    template: (registry) => (document) => document.body?.(registry) ?? null,
     body: () => raw.replace(/^-{3,}.+-{3,}(\r?\n)*/gs, "")
   };
 };
