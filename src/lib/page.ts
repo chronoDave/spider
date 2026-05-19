@@ -2,9 +2,9 @@ import path from 'path';
 
 export type Registry = Map<string, Page>;
 
-export type Template = (registry: Registry) => (page: Page) => string;
+export type Template = (registry: Registry) => (page: Page) => string | null;
 
-export type Body = (registry: Registry) => string;
+export type Body = (registry: Registry) => string | null;
 
 export type Draft = {
   title: string;

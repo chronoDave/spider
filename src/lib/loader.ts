@@ -69,7 +69,7 @@ export const md: Loader = root => async file => {
     ext: ext ?? '.html',
     created,
     updated: updated.getTime() === created.getTime() ? null : updated,
-    template: registry => document => document.body(registry),
+    template: registry => document => document.body?.(registry) ?? null,
     body: () => raw.replace(/^-{3,}.+-{3,}(\r?\n)*/gs, '')
   };
 };
