@@ -1,21 +1,21 @@
 import type { Loader } from './lib/loader.ts';
-import type { Registry } from './lib/page.ts';
 
 import fsp from 'fs/promises';
 import path from 'path';
 
 import Page from './lib/page.ts';
+import Registry from './lib/registry.ts';
 import * as loader from './lib/loader.ts';
 
 export type { Loader } from './lib/loader.ts';
+export type { Node } from './lib/registry.ts';
 export type {
-  Registry,
   Template,
   Body,
   Draft,
   PageOptions
 } from './lib/page.ts';
-export { Page };
+export { Page, Registry };
 
 export type SpiderOptions = {
   /** File globs */
@@ -32,15 +32,15 @@ export type SpiderOptions = {
 
 export default class Spider {
   readonly #files: string[];
+  readonly #pages: Map<string, Page>;
   readonly #exclude: string[];
   readonly #dirout: string | null;
   readonly #root: string;
   readonly #loaders: Map<string, ReturnType<Loader>>;
-  readonly #registry: Registry;
 
   constructor(options: SpiderOptions) {
     this.#files = options.files;
-    this.#registry = new Map();
+    this.#pages = new Map();
     this.#root = options.root ?? process.cwd();
     this.#exclude = options.exclude ?? [];
     this.#dirout = options.dirout ?? null;
@@ -54,13 +54,15 @@ export default class Spider {
 
   /** Write registry to `dirout` */
   async write() {
-    if (typeof this.#dirout !== 'string') return this.#registry;
-    for (const page of this.#registry.values()) {
+    if (typeof this.#dirout !== 'string') throw new Error('Failed to write', { cause: new Error('Missing option "dirout"') });
+
+    const registry = new Registry(Array.from(this.#pages.values()));
+    for (const page of registry.pages) {
       await fsp.mkdir(path.join(this.#dirout, page.dir), { recursive: true });
-      await fsp.writeFile(path.join(this.#dirout, page.file), page.render(this.#registry));
+      await fsp.writeFile(path.join(this.#dirout, page.file), page.render(registry));
     }
 
-    return this.#registry;
+    return registry;
   }
 
   /** Load file into registry */
@@ -69,14 +71,14 @@ export default class Spider {
 
     const draft = await this.#loaders.get(path.extname(file))?.(file);
     if (!draft) throw err(`Unknown file type "${path.extname(file)}"`);
-    if (this.#registry.has(draft.url)) throw err(`Page already exists with url "${draft.url}"`);
+    if (this.#pages.has(draft.url)) throw err(`Page already exists with url "${draft.url}"`);
 
-    this.#registry.set(draft.url, new Page(draft));
+    this.#pages.set(draft.url, new Page(draft));
   }
 
   /** Build project */
   async build() {
-    for await (const file of fsp.glob(this.#files, { exclude: this.#exclude })) this.load(file);
+    for await (const file of fsp.glob(this.#files, { exclude: this.#exclude })) await this.load(file);
 
     return this.write();
   }

@@ -1,6 +1,8 @@
+import type Registry from './registry.ts';
+
 import path from 'path';
 
-export type Registry = Map<string, Page>;
+import * as string from './string.ts';
 
 export type Template = (registry: Registry) => (page: Page) => string | null;
 
@@ -39,6 +41,7 @@ export default class Page {
   readonly template: Template | null;
   readonly file: string;
   readonly dir: string;
+  readonly depth: number;
 
   constructor(options: PageOptions) {
     this.title = options.title;
@@ -55,6 +58,7 @@ export default class Page {
     this.file = `${this.file}${this.ext}`;
 
     this.dir = path.dirname(this.file);
+    this.depth = this.url === '/' ? 0 : string.count('/')(this.dir);
   }
 
   render(registry: Registry): string {
