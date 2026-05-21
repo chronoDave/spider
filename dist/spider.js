@@ -10,6 +10,18 @@ import path3 from "path";
 
 // src/lib/page.ts
 import path from "path";
+
+// src/lib/string.ts
+var slugify = (x) => x.trim().replace(/\s+/g, "-").normalize("NFD").replace(/(\p{Diacritic})|[^A-Za-z0-9-]/gu, "").replace(/-+/g, "-").toLocaleLowerCase();
+var count = (c) => (x) => {
+  let n = 0;
+  for (let i = 0; i < x.length; i += 1) {
+    if (x.slice(i, i + c.length) === c) n += 1;
+  }
+  return n;
+};
+
+// src/lib/page.ts
 var Page = class {
   title;
   description;
@@ -21,6 +33,7 @@ var Page = class {
   template;
   file;
   dir;
+  depth;
   constructor(options) {
     this.title = options.title;
     this.description = options.description;
@@ -34,9 +47,43 @@ var Page = class {
     if (this.file.endsWith("/")) this.file = `${this.file}index`;
     this.file = `${this.file}${this.ext}`;
     this.dir = path.dirname(this.file);
+    this.depth = this.url === "/" ? 0 : count("/")(this.dir);
   }
   render(registry) {
     return this.template?.(registry)(this) ?? "";
+  }
+};
+
+// src/lib/registry.ts
+var Registry = class _Registry {
+  #map;
+  pages;
+  tree;
+  static trie(pages) {
+    const trie = [];
+    for (const page of pages.sort((a, b) => a.depth - b.depth)) {
+      const dirs = page.url.split("/").filter(Boolean);
+      let current = null;
+      for (let i = 0; i < dirs.length; i += 1) {
+        const url2 = i === 0 ? "/" : `/${dirs.slice(0, i).join("/")}`;
+        const parent = (current?.children ?? trie).find((node) => node.page.url === url2) ?? null;
+        if (parent) current = parent;
+      }
+      if (current) {
+        current.children.push({ page, parent: current, children: [] });
+      } else {
+        trie.push({ page, parent: null, children: [] });
+      }
+    }
+    return trie;
+  }
+  constructor(pages) {
+    this.pages = pages;
+    this.tree = _Registry.trie(pages);
+    this.#map = new Map(pages.map((page) => [page.url, page]));
+  }
+  get(url2) {
+    return this.#map.get(url2) ?? null;
   }
 };
 
@@ -62,11 +109,6 @@ var fromString = (x) => {
 
 // src/lib/path.ts
 import path2 from "path";
-
-// src/lib/string.ts
-var slugify = (x) => x.trim().replace(/\s+/g, "-").normalize("NFD").replace(/(\p{Diacritic})|[^A-Za-z0-9-]/gu, "").replace(/-+/g, "-").toLocaleLowerCase();
-
-// src/lib/path.ts
 var rel = (root) => (file) => {
   const rel2 = file.replace(root, "").replaceAll(path2.win32.sep, path2.posix.sep);
   if (rel2.length === 0) return "/";
@@ -155,14 +197,14 @@ var md = (root) => async (file) => {
 // src/spider.ts
 var Spider = class {
   #files;
+  #pages;
   #exclude;
   #dirout;
   #root;
   #loaders;
-  #registry;
   constructor(options) {
     this.#files = options.files;
-    this.#registry = /* @__PURE__ */ new Map();
+    this.#pages = /* @__PURE__ */ new Map();
     this.#root = options.root ?? process.cwd();
     this.#exclude = options.exclude ?? [];
     this.#dirout = options.dirout ?? null;
@@ -174,28 +216,30 @@ var Spider = class {
   }
   /** Write registry to `dirout` */
   async write() {
-    if (typeof this.#dirout !== "string") return this.#registry;
-    for (const page of this.#registry.values()) {
+    if (typeof this.#dirout !== "string") throw new Error("Failed to write", { cause: new Error('Missing option "dirout"') });
+    const registry = new Registry(Array.from(this.#pages.values()));
+    for (const page of registry.pages) {
       await fsp2.mkdir(path3.join(this.#dirout, page.dir), { recursive: true });
-      await fsp2.writeFile(path3.join(this.#dirout, page.file), page.render(this.#registry));
+      await fsp2.writeFile(path3.join(this.#dirout, page.file), page.render(registry));
     }
-    return this.#registry;
+    return registry;
   }
   /** Load file into registry */
   async load(file) {
     const err2 = (reason) => new Error(`Failed to load page "${file}"`, { cause: new Error(reason) });
     const draft = await this.#loaders.get(path3.extname(file))?.(file);
     if (!draft) throw err2(`Unknown file type "${path3.extname(file)}"`);
-    if (this.#registry.has(draft.url)) throw err2(`Page already exists with url "${draft.url}"`);
-    this.#registry.set(draft.url, new Page(draft));
+    if (this.#pages.has(draft.url)) throw err2(`Page already exists with url "${draft.url}"`);
+    this.#pages.set(draft.url, new Page(draft));
   }
   /** Build project */
   async build() {
-    for await (const file of fsp2.glob(this.#files, { exclude: this.#exclude })) this.load(file);
+    for await (const file of fsp2.glob(this.#files, { exclude: this.#exclude })) await this.load(file);
     return this.write();
   }
 };
 export {
   Page,
+  Registry,
   Spider as default
 };

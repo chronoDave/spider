@@ -1,4 +1,16 @@
-export type Registry = Map<string, Page>;
+export type Node = {
+	page: Page;
+	parent: Node | null;
+	children: Node[];
+};
+export declare class Registry {
+	#private;
+	readonly pages: Page[];
+	readonly tree: Node[];
+	static trie(pages: Page[]): Node[];
+	constructor(pages: Page[]);
+	get(url: string): Page | null;
+}
 export type Template = (registry: Registry) => (page: Page) => string | null;
 export type Body = (registry: Registry) => string | null;
 export type Draft = {
@@ -32,6 +44,7 @@ export declare class Page {
 	readonly template: Template | null;
 	readonly file: string;
 	readonly dir: string;
+	readonly depth: number;
 	constructor(options: PageOptions);
 	render(registry: Registry): string;
 }
