@@ -104,9 +104,9 @@ var truncateDay = (x) => {
   return x;
 };
 var fromString = (x) => {
-  const date = new Date(x);
-  if (Number.isNaN(date.getTime())) throw new Error("Invalid date");
-  return date;
+  const date2 = new Date(x);
+  if (Number.isNaN(date2.getTime())) throw new Error("Invalid date");
+  return date2;
 };
 
 // src/lib/path.ts
@@ -137,6 +137,10 @@ var object = (label) => (x) => {
   if (Array.isArray(x)) throw errObj("array");
   return x;
 };
+var date = (label) => (x) => {
+  if (!(x instanceof Date)) throw err(label)("Date")(typeof x);
+  return x;
+};
 
 // src/lib/fn.ts
 var maybe = (fn2) => (x) => {
@@ -155,8 +159,8 @@ var js = (root) => async (file) => {
   const description = maybe(string("description"))(module.description);
   const url2 = maybe(string("url"))(module.url);
   const ext = maybe(string("ext"))(module.ext);
-  const created = truncateDay(maybe(fromString)(maybe(string("created"))(module.created)) ?? stat.birthtime);
-  const updated = truncateDay(maybe(fromString)(maybe(string("updated"))(module.updated)) ?? stat.mtime);
+  const created = truncateDay(maybe(date("created"))(module.created) ?? stat.birthtime);
+  const updated = truncateDay(maybe(date("updated"))(module.updated) ?? stat.mtime);
   const template = maybe(fn("template"))(module.template);
   const body = maybe(fn("body"))(module.body);
   return {
