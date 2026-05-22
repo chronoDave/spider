@@ -47,7 +47,7 @@ var Page = class {
     if (this.file.endsWith("/")) this.file = `${this.file}index`;
     this.file = `${this.file}${this.ext}`;
     this.dir = path.dirname(this.file);
-    this.depth = this.url === "/" ? 0 : count("/")(this.dir);
+    this.depth = this.url === "/" ? 0 : count("/")(this.file);
   }
   render(registry) {
     return this.template?.(registry)(this) ?? "";
@@ -62,7 +62,11 @@ var Registry = class {
   constructor(pages) {
     this.nodes = [];
     this.tree = [];
-    for (const page of pages.sort((a, b) => a.depth - b.depth)) {
+    const sort = (a, b) => {
+      if (a.depth === b.depth) return a.url.localeCompare(b.url);
+      return a.depth - b.depth;
+    };
+    for (const page of pages.sort(sort)) {
       const dirs = page.url.split("/").filter(Boolean);
       let current = null;
       for (let i = 0; i < dirs.length; i += 1) {
