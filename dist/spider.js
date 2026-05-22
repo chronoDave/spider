@@ -55,34 +55,32 @@ var Page = class {
 };
 
 // src/lib/registry.ts
-var Registry = class _Registry {
+var Registry = class {
   #map;
-  pages;
+  nodes;
   tree;
-  static trie(pages) {
-    const trie = [];
+  constructor(pages) {
+    this.nodes = [];
+    this.tree = [];
     for (const page of pages.sort((a, b) => a.depth - b.depth)) {
       const dirs = page.url.split("/").filter(Boolean);
       let current = null;
       for (let i = 0; i < dirs.length; i += 1) {
         const url2 = i === 0 ? "/" : `/${dirs.slice(0, i).join("/")}`;
-        const parent = (current?.children ?? trie).find((node) => node.page.url === url2) ?? null;
+        const parent = (current?.children ?? this.tree).find((node2) => node2.page.url === url2) ?? null;
         if (parent) current = parent;
       }
+      const node = { page, parent: current, children: [] };
+      this.nodes.push(node);
       if (current) {
-        current.children.push({ page, parent: current, children: [] });
+        current.children.push(node);
       } else {
-        trie.push({ page, parent: null, children: [] });
+        this.tree.push(node);
       }
     }
-    return trie;
+    this.#map = new Map(this.nodes.map((node) => [node.page.url, node]));
   }
-  constructor(pages) {
-    this.pages = pages;
-    this.tree = _Registry.trie(pages);
-    this.#map = new Map(pages.map((page) => [page.url, page]));
-  }
-  get(url2) {
+  node(url2) {
     return this.#map.get(url2) ?? null;
   }
 };
@@ -218,9 +216,9 @@ var Spider = class {
   async write() {
     if (typeof this.#dirout !== "string") throw new Error("Failed to write", { cause: new Error('Missing option "dirout"') });
     const registry = new Registry(Array.from(this.#pages.values()));
-    for (const page of registry.pages) {
-      await fsp2.mkdir(path3.join(this.#dirout, page.dir), { recursive: true });
-      await fsp2.writeFile(path3.join(this.#dirout, page.file), page.render(registry));
+    for (const node of registry.nodes) {
+      await fsp2.mkdir(path3.join(this.#dirout, node.page.dir), { recursive: true });
+      await fsp2.writeFile(path3.join(this.#dirout, node.page.file), node.page.render(registry));
     }
     return registry;
   }

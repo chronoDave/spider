@@ -5,11 +5,10 @@ export type Node = {
 };
 export declare class Registry {
 	#private;
-	readonly pages: Page[];
+	readonly nodes: Node[];
 	readonly tree: Node[];
-	static trie(pages: Page[]): Node[];
 	constructor(pages: Page[]);
-	get(url: string): Page | null;
+	node(url: string): Node | null;
 }
 export type Template = (registry: Registry) => (page: Page) => string | null;
 export type Body = (registry: Registry) => string | null;
