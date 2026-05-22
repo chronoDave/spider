@@ -18,3 +18,8 @@ test('[parse.object]', t => {
   t.assert.throws(() => parse.object('')([]), 'invalid (array)');
   t.assert.deepEqual(parse.object('abc')({}), {}, 'valid (type)');
 });
+
+test('[parse.date]', t => {
+  t.assert.throws(() => parse.date('')(false), 'invalid (type)');
+  t.assert.doesNotThrow(() => parse.date('abc')(new Date()), 'valid (type)');
+});

@@ -23,3 +23,8 @@ export const object = (label: string) => (x: unknown): Record<string, unknown> =
 
   return x as Record<string, unknown>;
 };
+
+export const date = (label: string) => (x: unknown): Date => {
+  if (!(x instanceof Date)) throw err(label)('Date')(typeof x);
+  return x;
+};

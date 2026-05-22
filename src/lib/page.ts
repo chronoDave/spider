@@ -13,8 +13,8 @@ export type Draft = {
   description?: string;
   ext?: string;
   url?: string;
-  created?: string;
-  updated?: string;
+  created?: Date;
+  updated?: Date;
   template?: Template;
   body?: Body;
 };

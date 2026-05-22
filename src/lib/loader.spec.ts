@@ -21,7 +21,7 @@ test('[loader.js]', async t => {
   t.assert.equal(a.body?.(new Registry([])), 'abc', 'body');
 
   await fsp.mkdir(path.join(tmp, 'b'));
-  await fsp.writeFile(path.join(tmp, 'b/b.js'), 'export default { title: "abc", description: "abc", created: "2020-01-01", updated: "2021-01-01", body: () => "abc", template: () => () => "" }');
+  await fsp.writeFile(path.join(tmp, 'b/b.js'), 'export default { title: "abc", description: "abc", created: new Date("2020-01-01"), updated: new Date("2021-01-01"), body: () => "abc", template: () => () => "" }');
   const b = await loader.js(tmp)(path.join(tmp, 'b/b.js'));
 
   t.assert.equal(b.description, 'abc', 'description');
