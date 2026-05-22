@@ -12,7 +12,7 @@ test('[Spider.build]', async t => {
   });
 
   const registry = await spider.build();
-  t.assert.equal(registry.pages.length, 5);
+  t.assert.equal(registry.nodes.length, 5);
 
   await fsp.rm('build', { recursive: true, force: true });
 });

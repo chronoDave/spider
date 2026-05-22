@@ -57,9 +57,9 @@ export default class Spider {
     if (typeof this.#dirout !== 'string') throw new Error('Failed to write', { cause: new Error('Missing option "dirout"') });
 
     const registry = new Registry(Array.from(this.#pages.values()));
-    for (const page of registry.pages) {
-      await fsp.mkdir(path.join(this.#dirout, page.dir), { recursive: true });
-      await fsp.writeFile(path.join(this.#dirout, page.file), page.render(registry));
+    for (const node of registry.nodes) {
+      await fsp.mkdir(path.join(this.#dirout, node.page.dir), { recursive: true });
+      await fsp.writeFile(path.join(this.#dirout, node.page.file), node.page.render(registry));
     }
 
     return registry;

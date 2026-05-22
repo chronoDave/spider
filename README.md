@@ -71,7 +71,7 @@ const page: Page = {
   template,
   body: registry => h('main')()(
     h('p')()('This is a page'),
-    h('a')({ href: registry.get('/about')?.url })(registry.get('/about')?.title)
+    h('a')({ href: registry.node('/about')?.url })(registry.node('/about')?.title)
   )
 };
 
@@ -81,27 +81,20 @@ export default page;
 ##### `SpiderOptions`
 
 ```ts
-export type LoadContext = {
-  root: string;
-  file: string;
-};
-```
-
-```ts
-export type LoadResult = {
+export type PageOptions = {
   title: string;
   description: string | null;
   ext: string;
   url: string;
   created: Date;
   updated: Date | null;
-  template: Template;
-  body: Body;
+  template: Template | null;
+  body: Body | null;
 };
 ```
 
 ```ts
-export type Loader = (context: LoadContext) => Promise<LoadResult>;
+export type Loader = (root: string) => (file: string) => Promise<PageOptions>;
 ```
 
 ```ts
@@ -137,7 +130,7 @@ const loader: Loader = async context => ({
   created: new Date(),
   updated: null,
   template: registry => document => document.body(registry),
-  body: registry => `<a href="${registry.get('/').title}">Home</a>`
+  body: registry => `<a href="${registry.node('/').title}">Home</a>`
 });
 
 const spider = new Spider({

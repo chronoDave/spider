@@ -18,8 +18,8 @@ test('[Registry]', (t: TestContext) => {
     template: null
   })));
 
-  t.assert.equal(registry.pages.length, urls.length, 'has pages');
-  t.assert.ok(registry.get('/b/c/d'), 'has page');
+  t.assert.equal(registry.nodes.length, urls.length, 'has pages');
+  t.assert.ok(registry.node('/b/c/d'), 'has page');
 
   /**
    * /

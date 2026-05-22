@@ -7,12 +7,13 @@ export type Node = {
 };
 
 export default class Registry {
-  readonly #map: Map<string, Page>;
-  readonly pages: Page[];
+  readonly #map: Map<string, Node>;
+  readonly nodes: Node[];
   readonly tree: Node[];
 
-  static trie(pages: Page[]): Node[] {
-    const trie: Node[] = [];
+  constructor(pages: Page[]) {
+    this.nodes = [];
+    this.tree = [];
 
     for (const page of pages.sort((a, b) => a.depth - b.depth)) {
       /**
@@ -33,27 +34,23 @@ export default class Registry {
       for (let i = 0; i < dirs.length; i += 1) {
         const url = i === 0 ? '/' : `/${dirs.slice(0, i).join('/')}`;
         // @ts-expect-error: TS2339, "Property 'children' does not exist in type 'never'. (property) children: Node[] | undefined"
-        const parent: Node | null = (current?.children ?? trie).find(node => node.page.url === url) ?? null;
+        const parent: Node | null = (current?.children ?? this.tree).find(node => node.page.url === url) ?? null;
         if (parent) current = parent;
       }
 
+      const node: Node = { page, parent: current, children: [] };
+      this.nodes.push(node);
       if (current) {
-        current.children.push({ page, parent: current, children: [] });
+        current.children.push(node);
       } else {
-        trie.push({ page, parent: null, children: [] });
+        this.tree.push(node);
       }
     }
 
-    return trie;
+    this.#map = new Map(this.nodes.map(node => [node.page.url, node]));
   }
 
-  constructor(pages: Page[]) {
-    this.pages = pages;
-    this.tree = Registry.trie(pages);
-    this.#map = new Map(pages.map(page => [page.url, page]));
-  }
-
-  get(url: string): Page | null {
+  node(url: string): Node | null {
     return this.#map.get(url) ?? null;
   }
 }
