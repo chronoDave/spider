@@ -6,7 +6,7 @@ import Registry from './registry.ts';
 import Page from './page.ts';
 
 test('[Registry]', (t: TestContext) => {
-  const urls = ['/', '/a', '/b', '/b/c', '/b/c/d', '/e', '/f', '/f/g'];
+  const urls = ['/b/c', '/', '/b', '/a', '/e', '/f', '/f/g', '/b/c/d'];
   const registry = new Registry(urls.map(url => new Page({
     title: '',
     description: null,

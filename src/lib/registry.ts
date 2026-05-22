@@ -15,7 +15,12 @@ export default class Registry {
     this.nodes = [];
     this.tree = [];
 
-    for (const page of pages.sort((a, b) => a.depth - b.depth)) {
+    const sort = (a: Page, b: Page) => {
+      if (a.depth === b.depth) return a.url.localeCompare(b.url);
+      return a.depth - b.depth;
+    };
+
+    for (const page of pages.sort(sort)) {
       /**
        * / => []
        * /a => ['a']

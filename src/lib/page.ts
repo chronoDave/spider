@@ -58,7 +58,7 @@ export default class Page {
     this.file = `${this.file}${this.ext}`;
 
     this.dir = path.dirname(this.file);
-    this.depth = this.url === '/' ? 0 : string.count('/')(this.dir);
+    this.depth = this.url === '/' ? 0 : string.count('/')(this.file);
   }
 
   render(registry: Registry): string {
