@@ -41,7 +41,9 @@ export default class Spider {
   constructor(options: SpiderOptions) {
     this.#files = options.files;
     this.#pages = new Map();
-    this.#root = options.root ?? process.cwd();
+    this.#root = typeof options.root === 'string' ?
+      path.normalize(options.root) :
+      process.cwd();
     this.#exclude = options.exclude ?? [];
     this.#dirout = options.dirout ?? null;
 

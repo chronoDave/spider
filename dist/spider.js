@@ -221,7 +221,7 @@ var Spider = class {
   constructor(options) {
     this.#files = options.files;
     this.#pages = /* @__PURE__ */ new Map();
-    this.#root = options.root ?? process.cwd();
+    this.#root = typeof options.root === "string" ? path3.normalize(options.root) : process.cwd();
     this.#exclude = options.exclude ?? [];
     this.#dirout = options.dirout ?? null;
     this.#loaders = /* @__PURE__ */ new Map();
