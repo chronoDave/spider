@@ -150,54 +150,62 @@ var maybe = (fn2) => (x) => {
 
 // src/lib/loader.ts
 var js = (root) => async (file) => {
-  const [raw, stat] = await Promise.all([
-    import(`file://${resolve(file)}?${Date.now()}`),
-    fsp.stat(file)
-  ]);
-  const module = object("default")(raw.default);
-  const title = string("title")(module.title);
-  const description = maybe(string("description"))(module.description);
-  const url2 = maybe(string("url"))(module.url);
-  const ext = maybe(string("ext"))(module.ext);
-  const created = truncateDay(maybe(date("created"))(module.created) ?? stat.birthtime);
-  const updated = truncateDay(maybe(date("updated"))(module.updated) ?? stat.mtime);
-  const template = maybe(fn("template"))(module.template);
-  const body = maybe(fn("body"))(module.body);
-  return {
-    title,
-    description,
-    url: url2 ?? url(root)(file)(title),
-    ext: ext ?? ".html",
-    created,
-    updated: updated.getTime() === created.getTime() ? null : updated,
-    template,
-    body
-  };
+  try {
+    const [raw, stat] = await Promise.all([
+      import(`file://${resolve(file)}?${Date.now()}`),
+      fsp.stat(file)
+    ]);
+    const module = object("default")(raw.default);
+    const title = string("title")(module.title);
+    const description = maybe(string("description"))(module.description);
+    const url2 = maybe(string("url"))(module.url);
+    const ext = maybe(string("ext"))(module.ext);
+    const created = truncateDay(maybe(date("created"))(module.created) ?? stat.birthtime);
+    const updated = truncateDay(maybe(date("updated"))(module.updated) ?? stat.mtime);
+    const template = maybe(fn("template"))(module.template);
+    const body = maybe(fn("body"))(module.body);
+    return {
+      title,
+      description,
+      url: url2 ?? url(root)(file)(title),
+      ext: ext ?? ".html",
+      created,
+      updated: updated.getTime() === created.getTime() ? null : updated,
+      template,
+      body
+    };
+  } catch (err2) {
+    throw new Error(`Failed to load ${file}`, { cause: err2 });
+  }
 };
 var md = (root) => async (file) => {
-  const [raw, stat] = await Promise.all([
-    fsp.readFile(file, "utf-8"),
-    fsp.stat(file)
-  ]);
-  const header = /^-{3,}(.+)-{3,}/gs.exec(raw)?.[1];
-  if (typeof header !== "string") throw new Error("Missing metadata");
-  const metadata = Object.fromEntries(header.split(/\r?\n/).map((line) => line.split(":").map((x) => x.trim())));
-  const title = string("title")(metadata.title);
-  const description = maybe(string("description"))(metadata.description);
-  const url2 = maybe(string("url"))(metadata.url);
-  const ext = maybe(string("ext"))(metadata.ext);
-  const created = truncateDay(maybe(fromString)(maybe(string("created"))(metadata.created)) ?? stat.birthtime);
-  const updated = truncateDay(maybe(fromString)(maybe(string("updated"))(metadata.updated)) ?? stat.mtime);
-  return {
-    title,
-    description,
-    url: url2 ?? url(root)(file)(title),
-    ext: ext ?? ".html",
-    created,
-    updated: updated.getTime() === created.getTime() ? null : updated,
-    template: (registry) => (document) => document.body?.(registry) ?? null,
-    body: () => raw.replace(/^-{3,}.+-{3,}(\r?\n)*/gs, "")
-  };
+  try {
+    const [raw, stat] = await Promise.all([
+      fsp.readFile(file, "utf-8"),
+      fsp.stat(file)
+    ]);
+    const header = /^-{3,}(.+)-{3,}/gs.exec(raw)?.[1];
+    if (typeof header !== "string") throw new Error("Missing metadata");
+    const metadata = Object.fromEntries(header.split(/\r?\n/).map((line) => line.split(":").map((x) => x.trim())));
+    const title = string("title")(metadata.title);
+    const description = maybe(string("description"))(metadata.description);
+    const url2 = maybe(string("url"))(metadata.url);
+    const ext = maybe(string("ext"))(metadata.ext);
+    const created = truncateDay(maybe(fromString)(maybe(string("created"))(metadata.created)) ?? stat.birthtime);
+    const updated = truncateDay(maybe(fromString)(maybe(string("updated"))(metadata.updated)) ?? stat.mtime);
+    return {
+      title,
+      description,
+      url: url2 ?? url(root)(file)(title),
+      ext: ext ?? ".html",
+      created,
+      updated: updated.getTime() === created.getTime() ? null : updated,
+      template: (registry) => (document) => document.body?.(registry) ?? null,
+      body: () => raw.replace(/^-{3,}.+-{3,}(\r?\n)*/gs, "")
+    };
+  } catch (err2) {
+    throw new Error(`Failed to load ${file}`, { cause: err2 });
+  }
 };
 
 // src/spider.ts
