@@ -22,8 +22,8 @@ export type Draft = {
 export type PageOptions = {
   title: string;
   description: string | null;
-  ext: string;
   url: string;
+  ext: string | null;
   created: Date;
   updated: Date | null;
   template: Template | null;
@@ -33,7 +33,6 @@ export type PageOptions = {
 export default class Page {
   readonly title: string;
   readonly description: string | null;
-  readonly ext: string;
   readonly url: string;
   readonly created: Date;
   readonly updated: Date | null;
@@ -46,16 +45,20 @@ export default class Page {
   constructor(options: PageOptions) {
     this.title = options.title;
     this.description = options.description;
-    this.ext = options.ext;
-    this.url = options.url;
     this.created = options.created;
     this.updated = options.updated;
     this.body = options.body;
     this.template = options.template;
 
+    this.url = options.url;
+    if (typeof options.ext === 'string') {
+      if (this.url.endsWith('/')) this.url = `${this.url}index`;
+      this.url = `${this.url}${options.ext}`;
+    }
+
     this.file = this.url;
     if (this.file.endsWith('/')) this.file = `${this.file}index`;
-    this.file = `${this.file}${this.ext}`;
+    if (!/\.\w+/.test(this.file)) this.file = `${this.file}${options.ext ?? '.html'}`;
 
     this.dir = path.dirname(this.file);
     this.depth = this.url === '/' ? 0 : string.count('/')(this.file);

@@ -71,9 +71,11 @@ export default class Spider {
 
     const draft = await this.#loaders.get(path.extname(file))?.(file);
     if (!draft) throw err(`Unknown file type "${path.extname(file)}"`);
-    if (this.#pages.has(draft.url)) throw err(`Page already exists with url "${draft.url}"`);
 
-    this.#pages.set(draft.url, new Page(draft));
+    const page = new Page(draft);
+    if (this.#pages.has(page.url)) throw err(`Page already exists with url "${page.url}"`);
+
+    this.#pages.set(page.url, page);
   }
 
   /** Build project */

@@ -15,7 +15,6 @@ test('[loader.js]', async t => {
   t.assert.equal(a.title, 'abc', 'title');
   t.assert.equal(a.description, null, 'description');
   t.assert.equal(a.url, '/abc', 'url');
-  t.assert.equal(a.ext, '.html', 'ext');
   t.assert.equal(a.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created');
   t.assert.equal(a.updated, null, 'updated');
   t.assert.equal(a.body?.(new Registry([])), 'abc', 'body');
@@ -50,7 +49,6 @@ test('[loader.md]', async t => {
   t.assert.equal(a.title, 'abc', 'title');
   t.assert.equal(a.description, null, 'description');
   t.assert.equal(a.url, '/abc', 'url');
-  t.assert.equal(a.ext, '.html', 'ext');
   t.assert.equal(a.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created');
   t.assert.equal(a.updated, null, 'updated');
   t.assert.equal(a.body?.(new Registry([])), 'abc', 'body');
