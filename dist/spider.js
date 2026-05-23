@@ -25,7 +25,6 @@ var count = (c) => (x) => {
 var Page = class {
   title;
   description;
-  ext;
   url;
   created;
   updated;
@@ -37,15 +36,18 @@ var Page = class {
   constructor(options) {
     this.title = options.title;
     this.description = options.description;
-    this.ext = options.ext;
-    this.url = options.url;
     this.created = options.created;
     this.updated = options.updated;
     this.body = options.body;
     this.template = options.template;
+    this.url = options.url;
+    if (typeof options.ext === "string") {
+      if (this.url.endsWith("/")) this.url = `${this.url}index`;
+      this.url = `${this.url}${options.ext}`;
+    }
     this.file = this.url;
     if (this.file.endsWith("/")) this.file = `${this.file}index`;
-    this.file = `${this.file}${this.ext}`;
+    if (!/\.\w+/.test(this.file)) this.file = `${this.file}${options.ext ?? ".html"}`;
     this.dir = path.dirname(this.file);
     this.depth = this.url === "/" ? 0 : count("/")(this.file);
   }
@@ -158,7 +160,7 @@ var js = (root) => async (file) => {
     const module = object("default")(raw.default);
     const title = string("title")(module.title);
     const description = maybe(string("description"))(module.description);
-    const url2 = maybe(string("url"))(module.url);
+    const url2 = maybe(string("url"))(module.url) ?? url(root)(file)(title);
     const ext = maybe(string("ext"))(module.ext);
     const created = truncateDay(maybe(date("created"))(module.created) ?? stat.birthtime);
     const updated = truncateDay(maybe(date("updated"))(module.updated) ?? stat.mtime);
@@ -167,8 +169,8 @@ var js = (root) => async (file) => {
     return {
       title,
       description,
-      url: url2 ?? url(root)(file)(title),
-      ext: ext ?? ".html",
+      ext,
+      url: url2,
       created,
       updated: updated.getTime() === created.getTime() ? null : updated,
       template,
@@ -189,15 +191,15 @@ var md = (root) => async (file) => {
     const metadata = Object.fromEntries(header.split(/\r?\n/).map((line) => line.split(":").map((x) => x.trim())));
     const title = string("title")(metadata.title);
     const description = maybe(string("description"))(metadata.description);
-    const url2 = maybe(string("url"))(metadata.url);
+    const url2 = maybe(string("url"))(metadata.url) ?? url(root)(file)(title);
     const ext = maybe(string("ext"))(metadata.ext);
     const created = truncateDay(maybe(fromString)(maybe(string("created"))(metadata.created)) ?? stat.birthtime);
     const updated = truncateDay(maybe(fromString)(maybe(string("updated"))(metadata.updated)) ?? stat.mtime);
     return {
       title,
       description,
-      url: url2 ?? url(root)(file)(title),
-      ext: ext ?? ".html",
+      url: url2,
+      ext,
       created,
       updated: updated.getTime() === created.getTime() ? null : updated,
       template: (registry) => (document) => document.body?.(registry) ?? null,
@@ -243,8 +245,9 @@ var Spider = class {
     const err2 = (reason) => new Error(`Failed to load page "${file}"`, { cause: new Error(reason) });
     const draft = await this.#loaders.get(path3.extname(file))?.(file);
     if (!draft) throw err2(`Unknown file type "${path3.extname(file)}"`);
-    if (this.#pages.has(draft.url)) throw err2(`Page already exists with url "${draft.url}"`);
-    this.#pages.set(draft.url, new Page(draft));
+    const page = new Page(draft);
+    if (this.#pages.has(page.url)) throw err2(`Page already exists with url "${page.url}"`);
+    this.#pages.set(page.url, page);
   }
   /** Build project */
   async build() {

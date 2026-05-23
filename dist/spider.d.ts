@@ -25,8 +25,8 @@ export type Draft = {
 export type PageOptions = {
 	title: string;
 	description: string | null;
-	ext: string;
 	url: string;
+	ext: string | null;
 	created: Date;
 	updated: Date | null;
 	template: Template | null;
@@ -35,7 +35,6 @@ export type PageOptions = {
 export declare class Page {
 	readonly title: string;
 	readonly description: string | null;
-	readonly ext: string;
 	readonly url: string;
 	readonly created: Date;
 	readonly updated: Date | null;
