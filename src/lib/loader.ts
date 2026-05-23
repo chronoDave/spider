@@ -26,7 +26,7 @@ export const js: Loader = root => async file => {
 
     const title = parse.string('title')(module.title);
     const description = maybe(parse.string('description'))(module.description);
-    const url = maybe(parse.string('url'))(module.url) ?? `${path.url(root)(file)(title)}/`;
+    const url = maybe(parse.string('url'))(module.url) ?? path.url(root)(file)(title);
     const ext = maybe(parse.string('ext'))(module.ext);
     const created = date.truncateDay(maybe(parse.date('created'))(module.created) ?? stat.birthtime);
     const updated = date.truncateDay(maybe(parse.date('updated'))(module.updated) ?? stat.mtime);
@@ -62,7 +62,7 @@ export const md: Loader = root => async file => {
 
     const title = parse.string('title')(metadata.title);
     const description = maybe(parse.string('description'))(metadata.description);
-    const url = maybe(parse.string('url'))(metadata.url) ?? `${path.url(root)(file)(title)}/`;
+    const url = maybe(parse.string('url'))(metadata.url) ?? path.url(root)(file)(title);
     const ext = maybe(parse.string('ext'))(metadata.ext);
     const created = date.truncateDay(maybe(date.fromString)(maybe(parse.string('created'))(metadata.created)) ?? stat.birthtime);
     const updated = date.truncateDay(maybe(date.fromString)(maybe(parse.string('updated'))(metadata.updated)) ?? stat.mtime);

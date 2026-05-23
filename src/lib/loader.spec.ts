@@ -14,7 +14,7 @@ test('[loader.js]', async t => {
 
   t.assert.equal(a.title, 'abc', 'title');
   t.assert.equal(a.description, null, 'description');
-  t.assert.equal(a.url, '/abc/', 'url');
+  t.assert.equal(a.url, '/abc', 'url');
   t.assert.equal(a.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created');
   t.assert.equal(a.updated, null, 'updated');
   t.assert.equal(a.body?.(new Registry([])), 'abc', 'body');
@@ -24,7 +24,7 @@ test('[loader.js]', async t => {
   const b = await loader.js(tmp)(path.join(tmp, 'b/b.js'));
 
   t.assert.equal(b.description, 'abc', 'description');
-  t.assert.equal(b.url, '/b/abc/');
+  t.assert.equal(b.url, '/b/abc');
   t.assert.equal(b.created.getTime(), new Date('2020-01-01').getTime(), 'created');
   t.assert.equal(b.updated?.getTime(), new Date('2021-01-01').getTime(), 'updated');
 
@@ -48,7 +48,7 @@ test('[loader.md]', async t => {
 
   t.assert.equal(a.title, 'abc', 'title');
   t.assert.equal(a.description, null, 'description');
-  t.assert.equal(a.url, '/abc/', 'url');
+  t.assert.equal(a.url, '/abc', 'url');
   t.assert.equal(a.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created');
   t.assert.equal(a.updated, null, 'updated');
   t.assert.equal(a.body?.(new Registry([])), 'abc', 'body');
@@ -58,7 +58,7 @@ test('[loader.md]', async t => {
   const b = await loader.md(tmp)(path.join(tmp, 'b/b.md'));
 
   t.assert.equal(b.description, 'abc', 'description');
-  t.assert.equal(b.url, '/b/abc/');
+  t.assert.equal(b.url, '/b/abc');
   t.assert.equal(b.created.getTime(), new Date('2020-01-01').getTime(), 'created');
   t.assert.equal(b.updated?.getTime(), new Date('2021-01-01').getTime(), 'updated');
 
