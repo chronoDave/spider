@@ -160,7 +160,7 @@ var js = (root) => async (file) => {
     const module = object("default")(raw.default);
     const title = string("title")(module.title);
     const description = maybe(string("description"))(module.description);
-    const url2 = maybe(string("url"))(module.url) ?? `${url(root)(file)(title)}/`;
+    const url2 = maybe(string("url"))(module.url) ?? url(root)(file)(title);
     const ext = maybe(string("ext"))(module.ext);
     const created = truncateDay(maybe(date("created"))(module.created) ?? stat.birthtime);
     const updated = truncateDay(maybe(date("updated"))(module.updated) ?? stat.mtime);
@@ -191,7 +191,7 @@ var md = (root) => async (file) => {
     const metadata = Object.fromEntries(header.split(/\r?\n/).map((line) => line.split(":").map((x) => x.trim())));
     const title = string("title")(metadata.title);
     const description = maybe(string("description"))(metadata.description);
-    const url2 = maybe(string("url"))(metadata.url) ?? `${url(root)(file)(title)}/`;
+    const url2 = maybe(string("url"))(metadata.url) ?? url(root)(file)(title);
     const ext = maybe(string("ext"))(metadata.ext);
     const created = truncateDay(maybe(fromString)(maybe(string("created"))(metadata.created)) ?? stat.birthtime);
     const updated = truncateDay(maybe(fromString)(maybe(string("updated"))(metadata.updated)) ?? stat.mtime);
