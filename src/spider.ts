@@ -65,7 +65,7 @@ export default class Spider {
     this.#loaders.set('.js', loader.js);
     this.#loaders.set('.ts', loader.js);
     this.#loaders.set('.md', loader.md);
-    if (options.loader) Object.entries(loader).forEach(([ext, loader]) => this.#loaders.set(ext, loader));
+    if (options.loader) Object.entries(options.loader).forEach(([ext, loader]) => this.#loaders.set(ext, loader));
   }
 
   /** Write registry to `dirout` */
