@@ -195,7 +195,7 @@ var Spider = class {
     this.#loaders.set(".js", js);
     this.#loaders.set(".ts", js);
     this.#loaders.set(".md", md);
-    if (options.loader) Object.entries(loader_exports).forEach(([ext, loader]) => this.#loaders.set(ext, loader));
+    if (options.loader) Object.entries(options.loader).forEach(([ext, loader]) => this.#loaders.set(ext, loader));
   }
   /** Write registry to `dirout` */
   async write() {
