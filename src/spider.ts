@@ -1,4 +1,4 @@
-import type { Loader, LoadResult } from './lib/loader.ts';
+import type { Loader, Draft } from './lib/loader.ts';
 import type { Document, Template, Body } from './lib/document.ts';
 
 import fsp from 'fs/promises';
@@ -12,7 +12,7 @@ import { relative } from './lib/url.ts';
 export type { Node } from './lib/registry.ts';
 export type {
   Loader,
-  LoadResult,
+  Draft,
   Document,
   Template,
   Body

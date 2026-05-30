@@ -82,7 +82,7 @@ export default page;
 ##### `SpiderOptions`
 
 ```ts
-export type LoadResult = {
+export type Draft = {
   title: string;
   description: string | null;
   url: string | null;
@@ -95,7 +95,7 @@ export type LoadResult = {
 ```
 
 ```ts
-export type Loader = (file: string) => Promise<LoadResult>;
+export type Loader = (file: string) => Promise<Draft>;
 ```
 
 ```ts

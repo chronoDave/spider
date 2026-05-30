@@ -203,7 +203,7 @@ var Spider = class {
     const registry = new Registry(Array.from(this.#documents.values()));
     for (const node of registry.nodes) {
       const file2 = file(node.url)(node.ext);
-      await fsp2.mkdir(path3.join(this.#dirout, path3.dirname(file2)), { recursive: true });
+      await fsp2.mkdir(path3.dirname(path3.join(this.#dirout, file2)), { recursive: true });
       await fsp2.writeFile(path3.join(this.#dirout, file2), render(registry)(node));
     }
     return registry;

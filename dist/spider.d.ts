@@ -21,7 +21,7 @@ export type Document = {
 	readonly template: Template | null;
 	readonly body: Body;
 };
-export type LoadResult = {
+export type Draft = {
 	title: string;
 	description: string | null;
 	url: string | null;
@@ -31,7 +31,7 @@ export type LoadResult = {
 	template: Template | null;
 	body: Body;
 };
-export type Loader = (file: string) => Promise<LoadResult>;
+export type Loader = (file: string) => Promise<Draft>;
 export type Page = {
 	title: string;
 	description?: string;

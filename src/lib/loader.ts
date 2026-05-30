@@ -7,7 +7,7 @@ import * as date from './date.ts';
 import * as parse from './parse.ts';
 import { maybe } from './fn.ts';
 
-export type LoadResult = {
+export type Draft = {
   title: string;
   description: string | null;
   url: string | null;
@@ -18,7 +18,7 @@ export type LoadResult = {
   body: Body;
 };
 
-export type Loader = (file: string) => Promise<LoadResult>;
+export type Loader = (file: string) => Promise<Draft>;
 
 export const js: Loader = async file => {
   try {
