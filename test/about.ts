@@ -1,8 +1,10 @@
-import type { Draft } from '../src/spider.js';
+import type { Page } from '../src/spider.js';
 
-const page: Draft = {
+const page: Page = {
   title: 'About',
-  created: new Date('2020-01-01')
+  url: '/about',
+  created: new Date('2020-01-01'),
+  body: () => 'About'
 };
 
 export default page;

@@ -12,13 +12,14 @@
 
 ---
 
-`spider` is a tiny TypeScript static site generator (SSR) meant for small personal websites. It uses a modular plugin system for maximum flexibility.
+`spider` is a tiny static site generator (SSR) meant for small websites. It uses a modular plugin system for maximum flexibility.
 
 ## Features
 
 - No dependencies
 - No templating language, uses plain JS/TS
 - Modular loaders, allowing any file type to be used
+  - By default, loads `.ts`, `.js` and `.md` files
 - Flexible API, every page has full access to the whole website allowing for the creation of RSS feeds, collection pages, etc.
 - Sensible defaults
   - Markdown file URL's are generated based on folder structure and blog post title (`/<folder>/<title>`)
@@ -81,20 +82,20 @@ export default page;
 ##### `SpiderOptions`
 
 ```ts
-export type PageOptions = {
+export type LoadResult = {
   title: string;
   description: string | null;
-  url: string;
-  ext: string | null;
+  url: string | null;
+  ext: string;
   created: Date;
   updated: Date | null;
   template: Template | null;
-  body: Body | null;
+  body: Body;
 };
 ```
 
 ```ts
-export type Loader = (root: string) => (file: string) => Promise<PageOptions>;
+export type Loader = (file: string) => Promise<LoadResult>;
 ```
 
 ```ts

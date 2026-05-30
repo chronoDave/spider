@@ -1,5 +1,4 @@
-export type Node = {
-	page: Page;
+export type Node = Document & {
 	parent: Node | null;
 	children: Node[];
 };
@@ -7,46 +6,42 @@ export declare class Registry {
 	#private;
 	readonly nodes: Node[];
 	readonly tree: Node[];
-	constructor(pages: Page[]);
+	constructor(docs: Document[]);
 	node(url: string): Node | null;
 }
-export type Template = (registry: Registry) => (page: Page) => string | null;
-export type Body = (registry: Registry) => string | null;
-export type Draft = {
-	title: string;
-	description?: string;
-	ext?: string;
-	url?: string;
-	created?: Date;
-	updated?: Date;
-	template?: Template;
-	body?: Body;
-};
-export type PageOptions = {
-	title: string;
-	description: string | null;
-	url: string;
-	ext: string | null;
-	created: Date;
-	updated: Date | null;
-	template: Template | null;
-	body: Body | null;
-};
-export declare class Page {
+export type Template = (registry: Registry) => (doc: Document) => string;
+export type Body = (registry: Registry) => string;
+export type Document = {
 	readonly title: string;
 	readonly description: string | null;
 	readonly url: string;
+	readonly ext: string;
 	readonly created: Date;
 	readonly updated: Date | null;
-	readonly body: Body | null;
 	readonly template: Template | null;
-	readonly file: string;
-	readonly dir: string;
-	readonly depth: number;
-	constructor(options: PageOptions);
-	render(registry: Registry): string;
-}
-export type Loader = (root: string) => (file: string) => Promise<PageOptions>;
+	readonly body: Body;
+};
+export type LoadResult = {
+	title: string;
+	description: string | null;
+	url: string | null;
+	ext: string;
+	created: Date;
+	updated: Date | null;
+	template: Template | null;
+	body: Body;
+};
+export type Loader = (file: string) => Promise<LoadResult>;
+export type Page = {
+	title: string;
+	description?: string;
+	url?: string;
+	ext?: string;
+	created?: Date;
+	updated?: Date;
+	template?: Template;
+	body: Body;
+};
 export type SpiderOptions = {
 	/** File globs */
 	files: string[];

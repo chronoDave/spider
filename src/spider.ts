@@ -1,21 +1,35 @@
-import type { Loader } from './lib/loader.ts';
+import type { Loader, LoadResult } from './lib/loader.ts';
+import type { Document, Template, Body } from './lib/document.ts';
 
 import fsp from 'fs/promises';
 import path from 'path';
 
-import Page from './lib/page.ts';
 import Registry from './lib/registry.ts';
 import * as loader from './lib/loader.ts';
+import * as document from './lib/document.ts';
+import { relative } from './lib/url.ts';
 
-export type { Loader } from './lib/loader.ts';
 export type { Node } from './lib/registry.ts';
 export type {
+  Loader,
+  LoadResult,
+  Document,
   Template,
-  Body,
-  Draft,
-  PageOptions
-} from './lib/page.ts';
-export { Page, Registry };
+  Body
+};
+
+export { Registry };
+
+export type Page = {
+  title: string;
+  description?: string;
+  url?: string;
+  ext?: string;
+  created?: Date;
+  updated?: Date;
+  template?: Template;
+  body: Body;
+};
 
 export type SpiderOptions = {
   /** File globs */
@@ -32,15 +46,15 @@ export type SpiderOptions = {
 
 export default class Spider {
   readonly #files: string[];
-  readonly #pages: Map<string, Page>;
+  readonly #documents: Map<string, Document>;
   readonly #exclude: string[];
   readonly #dirout: string | null;
   readonly #root: string;
-  readonly #loaders: Map<string, ReturnType<Loader>>;
+  readonly #loaders: Map<string, Loader>;
 
   constructor(options: SpiderOptions) {
     this.#files = options.files;
-    this.#pages = new Map();
+    this.#documents = new Map();
     this.#root = typeof options.root === 'string' ?
       path.normalize(options.root) :
       process.cwd();
@@ -48,20 +62,22 @@ export default class Spider {
     this.#dirout = options.dirout ?? null;
 
     this.#loaders = new Map();
-    this.#loaders.set('.js', loader.js(this.#root));
-    this.#loaders.set('.ts', loader.js(this.#root));
-    this.#loaders.set('.md', loader.md(this.#root));
-    if (options.loader) Object.entries(loader).forEach(([ext, loader]) => this.#loaders.set(ext, loader(this.#root)));
+    this.#loaders.set('.js', loader.js);
+    this.#loaders.set('.ts', loader.js);
+    this.#loaders.set('.md', loader.md);
+    if (options.loader) Object.entries(loader).forEach(([ext, loader]) => this.#loaders.set(ext, loader));
   }
 
   /** Write registry to `dirout` */
   async write() {
     if (typeof this.#dirout !== 'string') throw new Error('Failed to write', { cause: new Error('Missing option "dirout"') });
 
-    const registry = new Registry(Array.from(this.#pages.values()));
+    const registry = new Registry(Array.from(this.#documents.values()));
     for (const node of registry.nodes) {
-      await fsp.mkdir(path.join(this.#dirout, node.page.dir), { recursive: true });
-      await fsp.writeFile(path.join(this.#dirout, node.page.file), node.page.render(registry));
+      const file = document.file(node.url)(node.ext);
+
+      await fsp.mkdir(path.dirname(path.join(this.#dirout, file)), { recursive: true });
+      await fsp.writeFile(path.join(this.#dirout, file), document.render(registry)(node));
     }
 
     return registry;
@@ -69,15 +85,28 @@ export default class Spider {
 
   /** Load file into registry */
   async load(file: string) {
-    const err = (reason: string) => new Error(`Failed to load page "${file}"`, { cause: new Error(reason) });
+    try {
+      const draft = await this.#loaders.get(path.extname(file))?.(file);
+      if (!draft) throw new Error(`Unknown file type "${path.extname(file)}"`);
 
-    const draft = await this.#loaders.get(path.extname(file))?.(file);
-    if (!draft) throw err(`Unknown file type "${path.extname(file)}"`);
+      let url = draft.url;
+      if (typeof url !== 'string') url = document.url(relative(this.#root)(file))(draft.title);
+      const id = document.file(url)(draft.ext);
+      if (this.#documents.has(id)) throw new Error(`Page already exists with file "${id}"`);
 
-    const page = new Page(draft);
-    if (this.#pages.has(page.url)) throw err(`Page already exists with url "${page.url}"`);
-
-    this.#pages.set(page.url, page);
+      this.#documents.set(id, {
+        title: draft.title,
+        description: draft.description,
+        url,
+        ext: draft.ext,
+        created: draft.created,
+        updated: draft.updated,
+        template: draft.template,
+        body: draft.body
+      });
+    } catch (cause) {
+      throw new Error(`Failed to load page "${file}"`, { cause });
+    }
   }
 
   /** Build project */

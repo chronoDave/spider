@@ -8,66 +8,66 @@ import Registry from './registry.ts';
 
 test('[loader.js]', async t => {
   const tmp = await fsp.mkdtemp(os.tmpdir());
+  const [a, b] = await Promise.all([
+    'export default { title: "a", body: () => "b" }',
+    'export default { title: "b", description: "c", url: "/abc", ext: ".xml", created: new Date("2020-01-01"), updated: new Date("2021-01-01"), body: () => "d", template: registry => doc => doc.body(registry) }'
+  ].map(async (page, i) => {
+    const file = path.join(tmp, `${i}.js`);
 
-  await fsp.writeFile(path.join(tmp, 'a.js'), 'export default { title: "abc", body: () => "abc", template: () => () => "" }');
-  const a = await loader.js(tmp)(path.join(tmp, 'a.js'));
+    await fsp.writeFile(file, page);
+    return loader.js(file);
+  }));
 
-  t.assert.equal(a.title, 'abc', 'title');
-  t.assert.equal(a.description, null, 'description');
-  t.assert.equal(a.url, '/abc', 'url');
-  t.assert.equal(a.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created');
-  t.assert.equal(a.updated, null, 'updated');
-  t.assert.equal(a.body?.(new Registry([])), 'abc', 'body');
+  t.assert.equal(a.title, 'a', 'title (a)');
+  t.assert.equal(a.description, null, 'description (a)');
+  t.assert.equal(a.url, null, 'url (a)');
+  t.assert.equal(a.ext, '.html', 'ext (a)');
+  t.assert.equal(a.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created (a)');
+  t.assert.equal(a.updated, null, 'updated (a)');
+  t.assert.equal(a.template, null, 'template (a)');
+  t.assert.equal(a.body(new Registry([])), 'b', 'body (a)');
 
-  await fsp.mkdir(path.join(tmp, 'b'));
-  await fsp.writeFile(path.join(tmp, 'b/b.js'), 'export default { title: "abc", description: "abc", created: new Date("2020-01-01"), updated: new Date("2021-01-01"), body: () => "abc", template: () => () => "" }');
-  const b = await loader.js(tmp)(path.join(tmp, 'b/b.js'));
-
-  t.assert.equal(b.description, 'abc', 'description');
-  t.assert.equal(b.url, '/b/abc');
-  t.assert.equal(b.created.getTime(), new Date('2020-01-01').getTime(), 'created');
-  t.assert.equal(b.updated?.getTime(), new Date('2021-01-01').getTime(), 'updated');
-
-  await fsp.writeFile(path.join(tmp, 'c.js'), 'export default { title: "abc" }');
-  await fsp.utimes(path.join(tmp, 'c.js'), 0, 0);
-  const c = await loader.js(tmp)(path.join(tmp, 'c.js'));
-
-  t.assert.equal(c.body, null);
-  t.assert.equal(c.template, null);
-  t.assert.equal(c.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created (utime)');
-  t.assert.equal(c.updated?.getTime(), new Date(0).getTime(), 'updated (utime)');
+  t.assert.equal(b.title, 'b', 'title (b)');
+  t.assert.equal(b.description, 'c', 'description (b)');
+  t.assert.equal(b.url, '/abc', 'url (b)');
+  t.assert.equal(b.ext, '.xml', 'ext (b)');
+  t.assert.equal(b.created.getTime(), new Date('2020-01-01').getTime(), 'created (b)');
+  t.assert.equal(b.updated?.getTime(), new Date('2021-01-01').getTime(), 'updated (b)');
+  t.assert.equal(typeof b.template, 'function', 'template (b)');
+  t.assert.equal(b.body(new Registry([])), 'd', 'body (b)');
 
   await fsp.rm(tmp, { recursive: true });
 });
 
 test('[loader.md]', async t => {
   const tmp = await fsp.mkdtemp(os.tmpdir());
+  const [a, b] = await Promise.all([
+    '---\ntitle:a\n---b',
+    '---\ntitle:b\ndescription:c\nurl:/abc\next:.xml\ncreated:2020-01-01\nupdated:2021-01-01\n---c'
+  ].map(async (page, i) => {
+    const file = path.join(tmp, `${i}.md`);
 
-  await fsp.writeFile(path.join(tmp, 'a.md'), '---\ntitle:abc\n---abc');
-  const a = await loader.md(tmp)(path.join(tmp, 'a.md'));
+    await fsp.writeFile(file, page);
+    return loader.md(file);
+  }));
 
-  t.assert.equal(a.title, 'abc', 'title');
-  t.assert.equal(a.description, null, 'description');
-  t.assert.equal(a.url, '/abc', 'url');
-  t.assert.equal(a.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created');
-  t.assert.equal(a.updated, null, 'updated');
-  t.assert.equal(a.body?.(new Registry([])), 'abc', 'body');
+  t.assert.equal(a.title, 'a', 'title (a)');
+  t.assert.equal(a.description, null, 'description (a)');
+  t.assert.equal(a.url, null, 'url (a)');
+  t.assert.equal(a.ext, '.html', 'ext (a)');
+  t.assert.equal(a.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created (a)');
+  t.assert.equal(a.updated, null, 'updated (a)');
+  t.assert.equal(a.template, null, 'template (a)');
+  t.assert.equal(a.body(new Registry([])), 'b', 'body (a)');
 
-  await fsp.mkdir(path.join(tmp, 'b'));
-  await fsp.writeFile(path.join(tmp, 'b/b.md'), '---\ntitle:abc\ndescription:abc\ncreated:2020-01-01\nupdated:2021-01-01\n---abc');
-  const b = await loader.md(tmp)(path.join(tmp, 'b/b.md'));
-
-  t.assert.equal(b.description, 'abc', 'description');
-  t.assert.equal(b.url, '/b/abc');
-  t.assert.equal(b.created.getTime(), new Date('2020-01-01').getTime(), 'created');
-  t.assert.equal(b.updated?.getTime(), new Date('2021-01-01').getTime(), 'updated');
-
-  await fsp.writeFile(path.join(tmp, 'c.md'), '---\ntitle:abc\n---abc');
-  await fsp.utimes(path.join(tmp, 'c.md'), 0, 0);
-  const c = await loader.md(tmp)(path.join(tmp, 'c.md'));
-
-  t.assert.equal(c.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created (utime)');
-  t.assert.equal(c.updated?.getTime(), new Date(0).getTime(), 'updated (utime)');
+  t.assert.equal(b.title, 'b', 'title (b)');
+  t.assert.equal(b.description, 'c', 'description (b)');
+  t.assert.equal(b.url, '/abc', 'url (b)');
+  t.assert.equal(b.ext, '.xml', 'ext (b)');
+  t.assert.equal(b.created.getTime(), new Date('2020-01-01').getTime(), 'created (b)');
+  t.assert.equal(b.updated?.getTime(), new Date('2021-01-01').getTime(), 'updated (b)');
+  t.assert.equal(b.template, null, 'template (b)');
+  t.assert.equal(b.body(new Registry([])), 'c', 'body (b)');
 
   await fsp.rm(tmp, { recursive: true });
 });

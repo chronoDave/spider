@@ -6,7 +6,7 @@ const template: Template = registry =>
   document => {
     const template = h('html')({ lang: 'en-GB' })(
       h('head')()(h('title')()()),
-      h('body')()(document.body?.(registry))
+      h('body')()(document.body(registry))
     );
 
     return `<!DOCTYPE html>${template}`;

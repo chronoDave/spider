@@ -3,23 +3,22 @@ import type { TestContext } from 'node:test';
 import test from 'node:test';
 
 import Registry from './registry.ts';
-import Page from './page.ts';
 
 test('[Registry]', (t: TestContext) => {
-  const urls = ['/b/c', '/', '/b', '/a', '/e', '/f', '/f/g', '/b/c/d', '/f/g.html', '/a.xml'];
-  const registry = new Registry(urls.map(url => new Page({
+  const urls = ['/b/c/', '/', '/b/', '/a/', '/e/', '/f/', '/f/g/', '/b/c/d/', '/f/g.html', '/a.xml'];
+  const registry = new Registry(urls.map(url => ({
     title: '',
     description: null,
     url,
-    ext: null,
+    ext: '.html',
     created: new Date(),
     updated: null,
-    body: null,
+    body: () => '',
     template: null
   })));
 
   t.assert.equal(registry.nodes.length, urls.length, 'has pages');
-  t.assert.ok(registry.node('/b/c/d'), 'has page');
+  t.assert.ok(registry.node('/b/c/d/'), 'has page');
   t.assert.ok(registry.node('/f/g.html'), 'has page (html)');
   t.assert.ok(registry.node('/a.xml'), 'has page (xml)');
 
@@ -34,7 +33,6 @@ test('[Registry]', (t: TestContext) => {
    *    /f/g
    */
   const tree = JSON.parse(JSON.stringify(registry.tree, (k, v) => {
-    if (v instanceof Page) return v.url;
     if (k === 'parent') return null;
     return v;
   }));
