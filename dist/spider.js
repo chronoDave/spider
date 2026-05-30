@@ -239,5 +239,6 @@ var Spider = class {
 };
 export {
   Registry,
-  Spider as default
+  Spider as default,
+  loader_exports as loader
 };

@@ -18,7 +18,7 @@ export type {
   Body
 };
 
-export { Registry };
+export { Registry, loader };
 
 export type Page = {
   title: string;
