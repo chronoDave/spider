@@ -21,7 +21,7 @@ test('[loader.js]', async t => {
   t.assert.equal(a.title, 'a', 'title (a)');
   t.assert.equal(a.description, null, 'description (a)');
   t.assert.equal(a.url, null, 'url (a)');
-  t.assert.equal(a.ext, '.html', 'ext (a)');
+  t.assert.equal(a.ext, null, 'ext (a)');
   t.assert.equal(a.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created (a)');
   t.assert.equal(a.updated, null, 'updated (a)');
   t.assert.equal(a.template, null, 'template (a)');
@@ -54,7 +54,7 @@ test('[loader.md]', async t => {
   t.assert.equal(a.title, 'a', 'title (a)');
   t.assert.equal(a.description, null, 'description (a)');
   t.assert.equal(a.url, null, 'url (a)');
-  t.assert.equal(a.ext, '.html', 'ext (a)');
+  t.assert.equal(a.ext, null, 'ext (a)');
   t.assert.equal(a.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created (a)');
   t.assert.equal(a.updated, null, 'updated (a)');
   t.assert.equal(a.template, null, 'template (a)');

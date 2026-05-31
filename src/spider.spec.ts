@@ -28,12 +28,13 @@ test('[Spider.build]', async (t: TestContext) => {
   });
   const registry = await spider.build();
 
-  t.assert.equal(registry.nodes.length, 6);
+  t.assert.equal(registry.nodes.length, 7);
   t.assert.ok(fs.existsSync(path.join('build/index.html')), 'root');
   t.assert.ok(fs.existsSync(path.join('build/blogs/index.html')), 'nested (js)');
-  t.assert.ok(fs.existsSync(path.join('build/blogs/index.xml')), 'url (rss)');
+  t.assert.ok(fs.existsSync(path.join('build/blogs/index.xml')), 'url (xml)');
   t.assert.ok(fs.existsSync(path.join('build/blogs/blog-a/index.html')), 'nested (md)');
   t.assert.ok(fs.existsSync(path.join('build/about.html')), 'url (html)');
+  t.assert.ok(fs.existsSync(path.join('build/about.xml')), 'url (xml)');
 
   await fsp.rm('build', { recursive: true, force: true });
 });

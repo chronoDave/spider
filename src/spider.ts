@@ -7,7 +7,7 @@ import path from 'path';
 import Registry from './lib/registry.ts';
 import * as loader from './lib/loader.ts';
 import * as document from './lib/document.ts';
-import { relative } from './lib/url.ts';
+import * as url from './lib/url.ts';
 
 export type { Node } from './lib/registry.ts';
 export type {
@@ -75,7 +75,7 @@ export default class Spider {
 
       const registry = new Registry(Array.from(this.#documents.values()));
       for (const node of registry.nodes) {
-        const file = document.file(node.url)(node.ext);
+        const file = document.file(node.url);
 
         await fsp.mkdir(path.dirname(path.join(this.#dirout, file)), { recursive: true });
         await fsp.writeFile(path.join(this.#dirout, file), document.render(registry)(node));
@@ -93,20 +93,11 @@ export default class Spider {
       const draft = await this.#loaders.get(path.extname(file))?.(file);
       if (!draft) throw new Error(`Unknown file type "${path.extname(file)}"`);
 
-      let url = draft.url ?? document.url(relative(this.#root)(file))(draft.title);
-      if (draft.ext !== '.html') url = `${url}${url.endsWith('/') ? 'index' : ''}${draft.ext}`;
-      if (this.#documents.has(url)) throw new Error(`Page already exists with url "${url}"`);
+      if (typeof draft.url !== 'string') draft.url = url.create(url.dirrel(this.#root)(file))(draft.title);
+      if (typeof draft.ext === 'string') draft.url = url.ext(draft.url)(draft.ext);
+      if (this.#documents.has(draft.url)) throw new Error(`Page already exists with url "${draft.url}"`);
 
-      this.#documents.set(url, {
-        title: draft.title,
-        description: draft.description,
-        url,
-        ext: draft.ext,
-        created: draft.created,
-        updated: draft.updated,
-        template: draft.template,
-        body: draft.body
-      });
+      this.#documents.set(draft.url, draft as Document);
     } catch (cause) {
       throw new Error(`Failed to load page "${file}"`, { cause });
     }

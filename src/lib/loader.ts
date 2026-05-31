@@ -11,7 +11,7 @@ export type Draft = {
   title: string;
   description: string | null;
   url: string | null;
-  ext: string;
+  ext: string | null;
   created: Date;
   updated: Date | null;
   template: Template | null;
@@ -40,7 +40,7 @@ export const js: Loader = async file => {
       title: parse.string('title')(module.title),
       description: maybe(parse.string('description'))(module.description),
       url: maybe(parse.string('url'))(module.url),
-      ext: maybe(parse.string('ext'))(module.ext) ?? '.html',
+      ext: maybe(parse.string('ext'))(module.ext),
       created,
       updated: updated.getTime() !== created.getTime() ? updated : null,
       template: maybe(parse.fn<Template>('template'))(module.template),
@@ -69,7 +69,7 @@ export const md: Loader = async file => {
       title: parse.string('title')(metadata.title),
       description: maybe(parse.string('description'))(metadata.description),
       url: maybe(parse.string('url'))(metadata.url),
-      ext: maybe(parse.string('ext'))(metadata.ext) ?? '.html',
+      ext: maybe(parse.string('ext'))(metadata.ext),
       created,
       updated: updated.getTime() !== created.getTime() ? updated : null,
       template: null,
