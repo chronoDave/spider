@@ -195,17 +195,18 @@ var Spider = class {
   }
   /** Write registry to `dirout` */
   async write() {
+    let file2 = null;
     try {
       if (typeof this.#dirout !== "string") throw new Error('Missing option "dirout"');
       const registry = new Registry(Array.from(this.#documents.values()));
       for (const node of registry.nodes) {
-        const file2 = file(node.url);
+        file2 = file(node.url);
         await fsp2.mkdir(path3.dirname(path3.join(this.#dirout, file2)), { recursive: true });
         await fsp2.writeFile(path3.join(this.#dirout, file2), render(registry)(node));
       }
       return registry;
     } catch (cause) {
-      throw new Error("Failed to write", { cause });
+      throw new Error(`Failed to write ${file2 ?? ""}`, { cause });
     }
   }
   /** Load file into registry */
