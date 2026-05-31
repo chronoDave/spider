@@ -5,62 +5,32 @@ import Registry from './registry.ts';
 
 test('[document.url]', t => {
   t.assert.equal(
-    document.url('.html')('/')('about'),
+    document.url('/')('about'),
     '/about/',
     'root'
   );
 
   t.assert.equal(
-    document.url('.html')('/')('index'),
+    document.url('/')('index'),
     '/',
     'index (root)'
   );
 
   t.assert.equal(
-    document.url('.html')('/about/')('me'),
+    document.url('/about/')('me'),
     '/about/me/',
     'dir'
   );
 
   t.assert.equal(
-    document.url('.html')('/about/')('about'),
+    document.url('/about/')('about'),
     '/about/',
     'dir (duplicate)'
   );
 
   t.assert.equal(
-    document.url('.html')('/about/')('index'),
+    document.url('/about/')('index'),
     '/about/',
-    'dir (index)'
-  );
-
-  t.assert.equal(
-    document.url('.xml')('/')('about'),
-    '/about.xml',
-    'root'
-  );
-
-  t.assert.equal(
-    document.url('.xml')('/')('index'),
-    '/index.xml',
-    'index (root)'
-  );
-
-  t.assert.equal(
-    document.url('.xml')('/about/')('me'),
-    '/about/me.xml',
-    'dir'
-  );
-
-  t.assert.equal(
-    document.url('.xml')('/about/')('about'),
-    '/about.xml',
-    'dir (duplicate)'
-  );
-
-  t.assert.equal(
-    document.url('.xml')('/about/')('index'),
-    '/about/index.xml',
     'dir (index)'
   );
 });

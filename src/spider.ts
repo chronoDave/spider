@@ -93,8 +93,8 @@ export default class Spider {
       const draft = await this.#loaders.get(path.extname(file))?.(file);
       if (!draft) throw new Error(`Unknown file type "${path.extname(file)}"`);
 
-      let url = draft.url;
-      if (typeof url !== 'string') url = document.url(draft.ext)(relative(this.#root)(file))(draft.title);
+      let url = draft.url ?? document.url(relative(this.#root)(file))(draft.title);
+      if (draft.ext !== '.html') url = `${url}${url.endsWith('/') ? 'index' : ''}${draft.ext}`;
       if (this.#documents.has(url)) throw new Error(`Page already exists with url "${url}"`);
 
       this.#documents.set(url, {
