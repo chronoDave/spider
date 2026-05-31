@@ -22,7 +22,7 @@ test('[loader.js]', async t => {
   t.assert.equal(a.description, null, 'description (a)');
   t.assert.equal(a.url, null, 'url (a)');
   t.assert.equal(a.ext, null, 'ext (a)');
-  t.assert.equal(a.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created (a)');
+  t.assert.equal(a.created, null, 'created (a)');
   t.assert.equal(a.updated, null, 'updated (a)');
   t.assert.equal(a.template, null, 'template (a)');
   t.assert.equal(a.body(new Registry([])), 'b', 'body (a)');
@@ -31,7 +31,7 @@ test('[loader.js]', async t => {
   t.assert.equal(b.description, 'c', 'description (b)');
   t.assert.equal(b.url, '/abc', 'url (b)');
   t.assert.equal(b.ext, '.xml', 'ext (b)');
-  t.assert.equal(b.created.getTime(), new Date('2020-01-01').getTime(), 'created (b)');
+  t.assert.equal(b.created?.getTime(), new Date('2020-01-01').getTime(), 'created (b)');
   t.assert.equal(b.updated?.getTime(), new Date('2021-01-01').getTime(), 'updated (b)');
   t.assert.equal(typeof b.template, 'function', 'template (b)');
   t.assert.equal(b.body(new Registry([])), 'd', 'body (b)');
@@ -55,7 +55,7 @@ test('[loader.md]', async t => {
   t.assert.equal(a.description, null, 'description (a)');
   t.assert.equal(a.url, null, 'url (a)');
   t.assert.equal(a.ext, null, 'ext (a)');
-  t.assert.equal(a.created.getTime(), new Date().setUTCHours(0, 0, 0, 0), 'created (a)');
+  t.assert.equal(a.created, null, 'created (a)');
   t.assert.equal(a.updated, null, 'updated (a)');
   t.assert.equal(a.template, null, 'template (a)');
   t.assert.equal(a.body(new Registry([])), 'b', 'body (a)');
@@ -64,7 +64,7 @@ test('[loader.md]', async t => {
   t.assert.equal(b.description, 'c', 'description (b)');
   t.assert.equal(b.url, '/abc', 'url (b)');
   t.assert.equal(b.ext, '.xml', 'ext (b)');
-  t.assert.equal(b.created.getTime(), new Date('2020-01-01').getTime(), 'created (b)');
+  t.assert.equal(b.created?.getTime(), new Date('2020-01-01').getTime(), 'created (b)');
   t.assert.equal(b.updated?.getTime(), new Date('2021-01-01').getTime(), 'updated (b)');
   t.assert.equal(b.template, null, 'template (b)');
   t.assert.equal(b.body(new Registry([])), 'c', 'body (b)');
