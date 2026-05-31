@@ -16,6 +16,12 @@ test('[url.relative]', t => {
   );
 
   t.assert.equal(
+    url.relative('src\\pages')('src\\pages\\about.md'),
+    '/',
+    'dir (win32 - file)'
+  );
+
+  t.assert.equal(
     url.relative('/Users/node')('/Users/node'),
     '/',
     'root (posix)'
