@@ -156,12 +156,8 @@ var md = async (file2) => {
 };
 
 // src/lib/document.ts
-var url = (ext) => (dir) => (title) => {
+var url = (dir) => (title) => {
   const slug = slugify(title);
-  if (ext !== ".html") {
-    if (dir.slice(0, -1).endsWith(slug)) return `${dir.slice(0, -1)}${ext}`;
-    return `${dir}${slug}${ext}`;
-  }
   if (slug === "index" || dir.slice(0, -1).endsWith(slug)) return dir;
   return `${dir}${slug}/`;
 };
@@ -221,8 +217,8 @@ var Spider = class {
     try {
       const draft = await this.#loaders.get(path3.extname(file2))?.(file2);
       if (!draft) throw new Error(`Unknown file type "${path3.extname(file2)}"`);
-      let url2 = draft.url;
-      if (typeof url2 !== "string") url2 = url(draft.ext)(relative(this.#root)(file2))(draft.title);
+      let url2 = draft.url ?? url(relative(this.#root)(file2))(draft.title);
+      if (draft.ext !== ".html") url2 = `${url2}${url2.endsWith("/") ? "index" : ""}${draft.ext}`;
       if (this.#documents.has(url2)) throw new Error(`Page already exists with url "${url2}"`);
       this.#documents.set(url2, {
         title: draft.title,
