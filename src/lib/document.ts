@@ -26,17 +26,23 @@ export type Document = {
  * - `/about/`, `about` => `/about/`
  * - `/about`, `index` => `/about/`
  */
-export const url = (dir: string) =>
-  (title: string) => {
-    const slug = slugify(title);
+export const url = (ext: string) =>
+  (dir: string) =>
+    (title: string) => {
+      const slug = slugify(title);
 
-    if (
-      slug === 'index' ||
-      dir.slice(0, -1).endsWith(slug)
-    ) return dir;
+      if (ext !== '.html') {
+        if (dir.slice(0, -1).endsWith(slug)) return `${dir.slice(0, -1)}${ext}`;
+        return `${dir}${slug}${ext}`;
+      }
 
-    return `${dir}${slug}/`;
-  };
+      if (
+        slug === 'index' ||
+        dir.slice(0, -1).endsWith(slug)
+      ) return dir;
+
+      return `${dir}${slug}/`;
+    };
 
 export const file = (url: string) =>
   (ext: string): string => {

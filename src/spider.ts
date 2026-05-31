@@ -70,17 +70,21 @@ export default class Spider {
 
   /** Write registry to `dirout` */
   async write() {
-    if (typeof this.#dirout !== 'string') throw new Error('Failed to write', { cause: new Error('Missing option "dirout"') });
+    try {
+      if (typeof this.#dirout !== 'string') throw new Error('Missing option "dirout"');
 
-    const registry = new Registry(Array.from(this.#documents.values()));
-    for (const node of registry.nodes) {
-      const file = document.file(node.url)(node.ext);
+      const registry = new Registry(Array.from(this.#documents.values()));
+      for (const node of registry.nodes) {
+        const file = document.file(node.url)(node.ext);
 
-      await fsp.mkdir(path.dirname(path.join(this.#dirout, file)), { recursive: true });
-      await fsp.writeFile(path.join(this.#dirout, file), document.render(registry)(node));
+        await fsp.mkdir(path.dirname(path.join(this.#dirout, file)), { recursive: true });
+        await fsp.writeFile(path.join(this.#dirout, file), document.render(registry)(node));
+      }
+
+      return registry;
+    } catch (cause) {
+      throw new Error('Failed to write', { cause });
     }
-
-    return registry;
   }
 
   /** Load file into registry */
@@ -90,11 +94,10 @@ export default class Spider {
       if (!draft) throw new Error(`Unknown file type "${path.extname(file)}"`);
 
       let url = draft.url;
-      if (typeof url !== 'string') url = document.url(relative(this.#root)(file))(draft.title);
-      const id = document.file(url)(draft.ext);
-      if (this.#documents.has(id)) throw new Error(`Page already exists with file "${id}"`);
+      if (typeof url !== 'string') url = document.url(draft.ext)(relative(this.#root)(file))(draft.title);
+      if (this.#documents.has(url)) throw new Error(`Page already exists with url "${url}"`);
 
-      this.#documents.set(id, {
+      this.#documents.set(url, {
         title: draft.title,
         description: draft.description,
         url,
@@ -111,9 +114,13 @@ export default class Spider {
 
   /** Build project */
   async build() {
-    for await (const file of fsp.glob(this.#files, { exclude: this.#exclude })) await this.load(file);
+    try {
+      for await (const file of fsp.glob(this.#files, { exclude: this.#exclude })) await this.load(file);
 
-    return this.write();
+      return await this.write();
+    } catch (cause) {
+      throw new Error('Failed to build', { cause });
+    }
   }
 }
 

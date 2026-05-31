@@ -156,8 +156,12 @@ var md = async (file2) => {
 };
 
 // src/lib/document.ts
-var url = (dir) => (title) => {
+var url = (ext) => (dir) => (title) => {
   const slug = slugify(title);
+  if (ext !== ".html") {
+    if (dir.slice(0, -1).endsWith(slug)) return `${dir.slice(0, -1)}${ext}`;
+    return `${dir}${slug}${ext}`;
+  }
   if (slug === "index" || dir.slice(0, -1).endsWith(slug)) return dir;
   return `${dir}${slug}/`;
 };
@@ -199,14 +203,18 @@ var Spider = class {
   }
   /** Write registry to `dirout` */
   async write() {
-    if (typeof this.#dirout !== "string") throw new Error("Failed to write", { cause: new Error('Missing option "dirout"') });
-    const registry = new Registry(Array.from(this.#documents.values()));
-    for (const node of registry.nodes) {
-      const file2 = file(node.url)(node.ext);
-      await fsp2.mkdir(path3.dirname(path3.join(this.#dirout, file2)), { recursive: true });
-      await fsp2.writeFile(path3.join(this.#dirout, file2), render(registry)(node));
+    try {
+      if (typeof this.#dirout !== "string") throw new Error('Missing option "dirout"');
+      const registry = new Registry(Array.from(this.#documents.values()));
+      for (const node of registry.nodes) {
+        const file2 = file(node.url)(node.ext);
+        await fsp2.mkdir(path3.dirname(path3.join(this.#dirout, file2)), { recursive: true });
+        await fsp2.writeFile(path3.join(this.#dirout, file2), render(registry)(node));
+      }
+      return registry;
+    } catch (cause) {
+      throw new Error("Failed to write", { cause });
     }
-    return registry;
   }
   /** Load file into registry */
   async load(file2) {
@@ -214,10 +222,9 @@ var Spider = class {
       const draft = await this.#loaders.get(path3.extname(file2))?.(file2);
       if (!draft) throw new Error(`Unknown file type "${path3.extname(file2)}"`);
       let url2 = draft.url;
-      if (typeof url2 !== "string") url2 = url(relative(this.#root)(file2))(draft.title);
-      const id = file(url2)(draft.ext);
-      if (this.#documents.has(id)) throw new Error(`Page already exists with file "${id}"`);
-      this.#documents.set(id, {
+      if (typeof url2 !== "string") url2 = url(draft.ext)(relative(this.#root)(file2))(draft.title);
+      if (this.#documents.has(url2)) throw new Error(`Page already exists with url "${url2}"`);
+      this.#documents.set(url2, {
         title: draft.title,
         description: draft.description,
         url: url2,
@@ -233,8 +240,12 @@ var Spider = class {
   }
   /** Build project */
   async build() {
-    for await (const file2 of fsp2.glob(this.#files, { exclude: this.#exclude })) await this.load(file2);
-    return this.write();
+    try {
+      for await (const file2 of fsp2.glob(this.#files, { exclude: this.#exclude })) await this.load(file2);
+      return await this.write();
+    } catch (cause) {
+      throw new Error("Failed to build", { cause });
+    }
   }
 };
 export {
