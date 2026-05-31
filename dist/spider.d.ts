@@ -15,7 +15,6 @@ export type Document = {
 	readonly title: string;
 	readonly description: string | null;
 	readonly url: string;
-	readonly ext: string;
 	readonly created: Date;
 	readonly updated: Date | null;
 	readonly template: Template | null;
@@ -25,7 +24,7 @@ export type Draft = {
 	title: string;
 	description: string | null;
 	url: string | null;
-	ext: string;
+	ext: string | null;
 	created: Date;
 	updated: Date | null;
 	template: Template | null;

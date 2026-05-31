@@ -36,8 +36,8 @@ var Registry = class {
       const dirs = doc.url.split("/").filter(Boolean);
       let current = null;
       for (let i = 0; i < dirs.length; i += 1) {
-        const url2 = i === 0 ? "/" : `/${dirs.slice(0, i).join("/")}/`;
-        const parent = (current?.children ?? this.tree).find((node2) => node2.url === url2) ?? null;
+        const url = i === 0 ? "/" : `/${dirs.slice(0, i).join("/")}/`;
+        const parent = (current?.children ?? this.tree).find((node2) => node2.url === url) ?? null;
         if (parent) current = parent;
       }
       const node = Object.assign({ parent: current, children: [] }, doc);
@@ -50,8 +50,8 @@ var Registry = class {
     });
     this.#map = new Map(this.nodes.map((node) => [node.url, node]));
   }
-  node(url2) {
-    return this.#map.get(url2) ?? null;
+  node(url) {
+    return this.#map.get(url) ?? null;
   }
 };
 
@@ -119,7 +119,7 @@ var js = async (file2) => {
       title: string("title")(module.title),
       description: maybe(string("description"))(module.description),
       url: maybe(string("url"))(module.url),
-      ext: maybe(string("ext"))(module.ext) ?? ".html",
+      ext: maybe(string("ext"))(module.ext),
       created,
       updated: updated.getTime() !== created.getTime() ? updated : null,
       template: maybe(fn("template"))(module.template),
@@ -144,7 +144,7 @@ var md = async (file2) => {
       title: string("title")(metadata.title),
       description: maybe(string("description"))(metadata.description),
       url: maybe(string("url"))(metadata.url),
-      ext: maybe(string("ext"))(metadata.ext) ?? ".html",
+      ext: maybe(string("ext"))(metadata.ext),
       created,
       updated: updated.getTime() !== created.getTime() ? updated : null,
       template: null,
@@ -156,27 +156,31 @@ var md = async (file2) => {
 };
 
 // src/lib/document.ts
-var url = (dir) => (title) => {
-  const slug = slugify(title);
-  if (slug === "index" || dir.slice(0, -1).endsWith(slug)) return dir;
-  return `${dir}${slug}/`;
-};
-var file = (url2) => (ext) => {
-  let file2 = url2;
-  if (file2.endsWith("/")) file2 = `${file2}index`;
-  if (!/\.\w+/.test(file2)) file2 = `${file2}${ext}`;
-  return file2;
+var file = (url) => {
+  if (url.endsWith("/")) return `${url}index.html`;
+  if (/\.\w+$/.test(url)) return url;
+  return `${url}.html`;
 };
 var render = (registry) => (doc) => doc.template?.(registry)(doc) ?? doc.body(registry);
 
 // src/lib/url.ts
 import path2 from "path";
-var relative = (root) => (file2) => {
+var dirrel = (root) => (file2) => {
   const rel = file2.replace(root, "").replaceAll(path2.win32.sep, path2.posix.sep);
   if (rel.length === 0) return "/";
   const dir = path2.dirname(rel);
   if (dir.endsWith("/")) return dir;
   return `${dir}/`;
+};
+var create = (dir) => (title) => {
+  const slug = slugify(title);
+  if (slug === "index" || dir.slice(0, -1).endsWith(slug)) return dir;
+  return `${dir}${slug}/`;
+};
+var ext = (url) => (ext2) => {
+  if (/\.\w+$/.test(url)) return url.replace(/\.\w+$/, ext2);
+  if (url.endsWith("/")) return `${url}index${ext2}`;
+  return `${url}${ext2}`;
 };
 
 // src/spider.ts
@@ -197,7 +201,7 @@ var Spider = class {
     this.#loaders.set(".js", js);
     this.#loaders.set(".ts", js);
     this.#loaders.set(".md", md);
-    if (options.loader) Object.entries(options.loader).forEach(([ext, loader]) => this.#loaders.set(ext, loader));
+    if (options.loader) Object.entries(options.loader).forEach(([ext2, loader]) => this.#loaders.set(ext2, loader));
   }
   /** Write registry to `dirout` */
   async write() {
@@ -205,7 +209,7 @@ var Spider = class {
       if (typeof this.#dirout !== "string") throw new Error('Missing option "dirout"');
       const registry = new Registry(Array.from(this.#documents.values()));
       for (const node of registry.nodes) {
-        const file2 = file(node.url)(node.ext);
+        const file2 = file(node.url);
         await fsp2.mkdir(path3.dirname(path3.join(this.#dirout, file2)), { recursive: true });
         await fsp2.writeFile(path3.join(this.#dirout, file2), render(registry)(node));
       }
@@ -219,19 +223,10 @@ var Spider = class {
     try {
       const draft = await this.#loaders.get(path3.extname(file2))?.(file2);
       if (!draft) throw new Error(`Unknown file type "${path3.extname(file2)}"`);
-      let url2 = draft.url ?? url(relative(this.#root)(file2))(draft.title);
-      if (draft.ext !== ".html") url2 = `${url2}${url2.endsWith("/") ? "index" : ""}${draft.ext}`;
-      if (this.#documents.has(url2)) throw new Error(`Page already exists with url "${url2}"`);
-      this.#documents.set(url2, {
-        title: draft.title,
-        description: draft.description,
-        url: url2,
-        ext: draft.ext,
-        created: draft.created,
-        updated: draft.updated,
-        template: draft.template,
-        body: draft.body
-      });
+      if (typeof draft.url !== "string") draft.url = create(dirrel(this.#root)(file2))(draft.title);
+      if (typeof draft.ext === "string") draft.url = ext(draft.url)(draft.ext);
+      if (this.#documents.has(draft.url)) throw new Error(`Page already exists with url "${draft.url}"`);
+      this.#documents.set(draft.url, draft);
     } catch (cause) {
       throw new Error(`Failed to load page "${file2}"`, { cause });
     }
