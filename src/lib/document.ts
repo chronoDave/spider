@@ -8,7 +8,7 @@ export type Document = {
   readonly title: string;
   readonly description: string | null;
   readonly url: string;
-  readonly created: Date;
+  readonly created: Date | null;
   readonly updated: Date | null;
   readonly template: Template | null;
   readonly body: Body;

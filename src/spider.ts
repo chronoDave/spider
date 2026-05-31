@@ -1,5 +1,6 @@
 import type { Loader, Draft } from './lib/loader.ts';
 import type { Document, Template, Body } from './lib/document.ts';
+import type { Node } from './lib/registry.ts';
 
 import fsp from 'fs/promises';
 import path from 'path';
@@ -9,8 +10,8 @@ import * as loader from './lib/loader.ts';
 import * as document from './lib/document.ts';
 import * as url from './lib/url.ts';
 
-export type { Node } from './lib/registry.ts';
 export type {
+  Node,
   Loader,
   Draft,
   Document,
@@ -70,12 +71,14 @@ export default class Spider {
 
   /** Write registry to `dirout` */
   async write() {
+    let file: string | null = null;
+
     try {
       if (typeof this.#dirout !== 'string') throw new Error('Missing option "dirout"');
 
       const registry = new Registry(Array.from(this.#documents.values()));
       for (const node of registry.nodes) {
-        const file = document.file(node.url);
+        file = document.file(node.url);
 
         await fsp.mkdir(path.dirname(path.join(this.#dirout, file)), { recursive: true });
         await fsp.writeFile(path.join(this.#dirout, file), document.render(registry)(node));
@@ -83,7 +86,7 @@ export default class Spider {
 
       return registry;
     } catch (cause) {
-      throw new Error('Failed to write', { cause });
+      throw new Error(`Failed to write ${file ?? ''}`, { cause });
     }
   }
 
