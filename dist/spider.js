@@ -108,20 +108,15 @@ var maybe = (fn2) => (x) => {
 // src/lib/loader.ts
 var js = async (file2) => {
   try {
-    const [raw, stat] = await Promise.all([
-      import(`file://${path.resolve(file2)}?${Date.now()}`),
-      fsp.stat(file2)
-    ]);
+    const raw = await import(`file://${path.resolve(file2)}?${Date.now()}`);
     const module = object("default")(raw.default);
-    const created = truncateDay(maybe(date("created"))(module.created) ?? stat.birthtime);
-    const updated = truncateDay(maybe(date("updated"))(module.updated) ?? stat.mtime);
     return {
       title: string("title")(module.title),
       description: maybe(string("description"))(module.description),
       url: maybe(string("url"))(module.url),
       ext: maybe(string("ext"))(module.ext),
-      created,
-      updated: updated.getTime() !== created.getTime() ? updated : null,
+      created: maybe(truncateDay)(maybe(date("created"))(module.created)),
+      updated: maybe(truncateDay)(maybe(date("updated"))(module.updated)),
       template: maybe(fn("template"))(module.template),
       body: fn("body")(module.body)
     };
@@ -131,22 +126,17 @@ var js = async (file2) => {
 };
 var md = async (file2) => {
   try {
-    const [raw, stat] = await Promise.all([
-      fsp.readFile(file2, "utf-8"),
-      fsp.stat(file2)
-    ]);
+    const raw = await fsp.readFile(file2, "utf-8");
     const header = /^-{3,}(.+)-{3,}/gs.exec(raw)?.[1];
     if (typeof header !== "string") throw new Error("Missing metadata");
     const metadata = Object.fromEntries(header.split(/\r?\n/).map((line) => line.split(":").map((x) => x.trim())));
-    const created = truncateDay(maybe(fromString)(maybe(string("created"))(metadata.created)) ?? stat.birthtime);
-    const updated = truncateDay(maybe(fromString)(maybe(string("updated"))(metadata.updated)) ?? stat.mtime);
     return {
       title: string("title")(metadata.title),
       description: maybe(string("description"))(metadata.description),
       url: maybe(string("url"))(metadata.url),
       ext: maybe(string("ext"))(metadata.ext),
-      created,
-      updated: updated.getTime() !== created.getTime() ? updated : null,
+      created: maybe(truncateDay)(maybe(fromString)(maybe(string("created"))(metadata.created))),
+      updated: maybe(truncateDay)(maybe(fromString)(maybe(string("updated"))(metadata.updated))),
       template: null,
       body: () => raw.replace(/^-{3,}.+-{3,}(\r?\n)*/gs, "")
     };

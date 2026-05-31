@@ -25,7 +25,7 @@ export type Draft = {
 	description: string | null;
 	url: string | null;
 	ext: string | null;
-	created: Date;
+	created: Date | null;
 	updated: Date | null;
 	template: Template | null;
 	body: Body;
