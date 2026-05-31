@@ -174,7 +174,9 @@ import path2 from "path";
 var relative = (root) => (file2) => {
   const rel = file2.replace(root, "").replaceAll(path2.win32.sep, path2.posix.sep);
   if (rel.length === 0) return "/";
-  return `${path2.dirname(rel)}/`;
+  const dir = path2.dirname(rel);
+  if (dir.endsWith("/")) return dir;
+  return `${dir}/`;
 };
 
 // src/spider.ts
