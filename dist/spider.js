@@ -18,39 +18,52 @@ var count = (c) => (x) => {
   return n;
 };
 
+// src/lib/array.ts
+var tree = (arr) => (parent) => {
+  const flat = [];
+  const nested = [];
+  for (const x of arr) {
+    const node = { parent: parent(x, nested), children: [], value: x };
+    flat.push(node);
+    if (node.parent) {
+      node.parent.children.push(node);
+    } else {
+      nested.push(node);
+    }
+  }
+  return { flat, nested };
+};
+
 // src/lib/registry.ts
 var Registry = class {
   #map;
-  nodes;
-  tree;
+  #tree;
   constructor(docs) {
-    this.nodes = [];
-    this.tree = [];
     const depth = count("/");
-    docs.sort((a, b) => {
+    this.#tree = tree(docs.sort((a, b) => {
       const aDepth = depth(a.url);
       const bDepth = depth(b.url);
       if (aDepth === bDepth) return a.url.localeCompare(b.url);
       return aDepth - bDepth;
-    }).forEach((doc) => {
-      const dirs = doc.url.split("/").filter(Boolean);
+    }))((doc, tree2) => {
       let current = null;
+      const dirs = doc.url.split("/").filter(Boolean);
       for (let i = 0; i < dirs.length; i += 1) {
         const url = i === 0 ? "/" : `/${dirs.slice(0, i).join("/")}/`;
-        const parent = (current?.children ?? this.tree).find((node2) => node2.url === url) ?? null;
+        const parent = (current?.children ?? tree2).find((node) => node.value.url === url) ?? null;
         if (parent) current = parent;
       }
-      const node = Object.assign({ parent: current, children: [] }, doc);
-      this.nodes.push(node);
-      if (current) {
-        current.children.push(node);
-      } else {
-        this.tree.push(node);
-      }
+      return current;
     });
-    this.#map = new Map(this.nodes.map((node) => [node.url, node]));
+    this.#map = new Map(this.#tree.flat.map((node) => [node.value.url, node]));
   }
-  node(url) {
+  get list() {
+    return this.#tree.flat;
+  }
+  get tree() {
+    return this.#tree.nested;
+  }
+  get(url) {
     return this.#map.get(url) ?? null;
   }
 };
@@ -199,10 +212,10 @@ var Spider = class {
     try {
       if (typeof this.#dirout !== "string") throw new Error('Missing option "dirout"');
       const registry = new Registry(Array.from(this.#documents.values()));
-      for (const node of registry.nodes) {
-        file2 = file(node.url);
+      for (const node of registry.list) {
+        file2 = file(node.value.url);
         await fsp2.mkdir(path3.dirname(path3.join(this.#dirout, file2)), { recursive: true });
-        await fsp2.writeFile(path3.join(this.#dirout, file2), render(registry)(node));
+        await fsp2.writeFile(path3.join(this.#dirout, file2), render(registry)(node.value));
       }
       return registry;
     } catch (cause) {
@@ -218,6 +231,7 @@ var Spider = class {
       if (typeof draft.ext === "string") draft.url = ext(draft.url)(draft.ext);
       if (this.#documents.has(draft.url)) throw new Error(`Page already exists with url "${draft.url}"`);
       this.#documents.set(draft.url, draft);
+      return draft;
     } catch (cause) {
       throw new Error(`Failed to load page "${file2}"`, { cause });
     }

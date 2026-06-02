@@ -1,13 +1,14 @@
-export type Node = Document & {
-	parent: Node | null;
-	children: Node[];
+type Node<T> = {
+	value: T;
+	parent: Node<T> | null;
+	children: Array<Node<T>>;
 };
 export declare class Registry {
 	#private;
-	readonly nodes: Node[];
-	readonly tree: Node[];
 	constructor(docs: Document[]);
-	node(url: string): Node | null;
+	get list(): Node<Document>[];
+	get tree(): Node<Document>[];
+	get(url: string): Node<Document> | null;
 }
 export type Template = (registry: Registry) => (doc: Document) => string;
 export type Body = (registry: Registry) => string;
@@ -61,7 +62,7 @@ declare class Spider {
 	/** Write registry to `dirout` */
 	write(): Promise<Registry>;
 	/** Load file into registry */
-	load(file: string): Promise<void>;
+	load(file: string): Promise<Document>;
 	/** Build project */
 	build(): Promise<Registry>;
 }
