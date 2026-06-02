@@ -72,7 +72,7 @@ const page: Page = {
   template,
   body: registry => h('main')()(
     h('p')()('This is a page'),
-    h('a')({ href: registry.node('/about')?.url })(registry.node('/about')?.title)
+    h('a')({ href: registry.node('/about')?.value..url })(registry.node('/about')?.value.title)
   )
 };
 
@@ -131,7 +131,7 @@ const loader: Loader = async context => ({
   created: new Date(),
   updated: null,
   template: registry => document => document.body(registry),
-  body: registry => `<a href="${registry.node('/').title}">Home</a>`
+  body: registry => `<a href="${registry.get('/').value.title}">Home</a>`
 });
 
 const spider = new Spider({

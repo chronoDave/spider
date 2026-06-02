@@ -10,7 +10,7 @@ const page: Page = {
   template,
   body: registry => h('main')()(
     h('p')()('This is a page'),
-    h('a')({ href: registry.node('/about/')?.url })(registry.node('/about/')?.title)
+    h('a')({ href: registry.get('/about/')?.value.url })(registry.get('/about/')?.value.title)
   )
 };
 

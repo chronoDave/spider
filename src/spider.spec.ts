@@ -28,7 +28,7 @@ test('[Spider.build]', async (t: TestContext) => {
   });
   const registry = await spider.build();
 
-  t.assert.equal(registry.nodes.length, 7);
+  t.assert.equal(registry.list.length, 7);
   t.assert.ok(fs.existsSync(path.join('build/index.html')), 'root');
   t.assert.ok(fs.existsSync(path.join('build/blogs/index.html')), 'nested (js)');
   t.assert.ok(fs.existsSync(path.join('build/blogs/index.xml')), 'url (xml)');
