@@ -1,7 +1,6 @@
 import type { Document } from './document.ts';
 import type { Tree, Node } from './array.ts';
 
-import * as string from './string.ts';
 import * as array from './array.ts';
 
 export default class Registry {
@@ -9,15 +8,7 @@ export default class Registry {
   readonly #tree: Tree<Document>;
 
   constructor(docs: Document[]) {
-    const depth = string.count('/');
-
-    this.#tree = array.tree(docs.sort((a, b) => {
-      const aDepth = depth(a.url);
-      const bDepth = depth(b.url);
-
-      if (aDepth === bDepth) return a.url.localeCompare(b.url);
-      return aDepth - bDepth;
-    }))((doc, tree) => {
+    this.#tree = array.tree(docs)((doc, tree) => {
       let current = null as Node<Document> | null;
 
       /**

@@ -1,7 +1,11 @@
-type Node<T> = {
+export type Node<T> = {
 	value: T;
 	parent: Node<T> | null;
 	children: Array<Node<T>>;
+};
+export type Tree<T> = {
+	flat: Array<Node<T>>;
+	nested: Array<Node<T>>;
 };
 export declare class Registry {
 	#private;
@@ -32,8 +36,6 @@ export type Draft = {
 	body: Body;
 };
 export type Loader = (file: string) => Promise<Draft>;
-declare const js: Loader;
-declare const md: Loader;
 export type Page = {
 	title: string;
 	description?: string;
@@ -45,35 +47,29 @@ export type Page = {
 	body: Body;
 };
 export type SpiderOptions = {
-	/** File globs */
-	files: string[];
-	/** Filter out files / directories using glob patterns from src */
+	/** Supports [Node globs](https://github.com/isaacs/minimatch#features) */
+	entryPoints: string[];
+	/** Supports [Node globs](https://github.com/isaacs/minimatch#features) */
 	exclude?: string[];
+	/** Output directory */
+	outdir?: string;
 	/** Base directory */
 	root?: string;
-	/** Output directory. If empty, does not write files */
-	dirout?: string;
 	/** File loaders */
 	loader?: Record<string, Loader>;
 };
 declare class Spider {
 	#private;
 	constructor(options: SpiderOptions);
-	/** Write registry to `dirout` */
-	write(): Promise<Registry>;
-	/** Load file into registry */
+	/** Load file */
 	load(file: string): Promise<Document>;
-	/** Build project */
-	build(): Promise<Registry>;
-}
-
-declare namespace loader {
-	export { Draft, Loader, js, md };
+	/** Write documents to `outdir` */
+	write(): Promise<void>;
+	build(): Promise<Map<string, Document>>;
 }
 
 export {
 	Spider as default,
-	loader,
 };
 
 export {};

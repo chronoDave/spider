@@ -1,79 +1,8 @@
-var __defProp = Object.defineProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-
 // src/spider.ts
-import fsp2 from "fs/promises";
 import path3 from "path";
-
-// src/lib/string.ts
-var slugify = (x) => x.trim().replace(/\s+/g, "-").normalize("NFD").replace(/(\p{Diacritic})|[^A-Za-z0-9-]/gu, "").replace(/-+/g, "-").toLocaleLowerCase();
-var count = (c) => (x) => {
-  let n = 0;
-  for (let i = 0; i < x.length; i += 1) {
-    if (x.slice(i, i + c.length) === c) n += 1;
-  }
-  return n;
-};
-
-// src/lib/array.ts
-var tree = (arr) => (parent) => {
-  const flat = [];
-  const nested = [];
-  for (const x of arr) {
-    const node = { parent: parent(x, nested), children: [], value: x };
-    flat.push(node);
-    if (node.parent) {
-      node.parent.children.push(node);
-    } else {
-      nested.push(node);
-    }
-  }
-  return { flat, nested };
-};
-
-// src/lib/registry.ts
-var Registry = class {
-  #map;
-  #tree;
-  constructor(docs) {
-    const depth = count("/");
-    this.#tree = tree(docs.sort((a, b) => {
-      const aDepth = depth(a.url);
-      const bDepth = depth(b.url);
-      if (aDepth === bDepth) return a.url.localeCompare(b.url);
-      return aDepth - bDepth;
-    }))((doc, tree2) => {
-      let current = null;
-      const dirs = doc.url.split("/").filter(Boolean);
-      for (let i = 0; i < dirs.length; i += 1) {
-        const url = i === 0 ? "/" : `/${dirs.slice(0, i).join("/")}/`;
-        const parent = (current?.children ?? tree2).find((node) => node.value.url === url) ?? null;
-        if (parent) current = parent;
-      }
-      return current;
-    });
-    this.#map = new Map(this.#tree.flat.map((node) => [node.value.url, node]));
-  }
-  get list() {
-    return this.#tree.flat;
-  }
-  get tree() {
-    return this.#tree.nested;
-  }
-  get(url) {
-    return this.#map.get(url) ?? null;
-  }
-};
+import fsp2 from "fs/promises";
 
 // src/lib/loader.ts
-var loader_exports = {};
-__export(loader_exports, {
-  js: () => js,
-  md: () => md
-});
 import fsp from "fs/promises";
 import path from "path";
 
@@ -158,16 +87,20 @@ var md = async (file2) => {
   }
 };
 
-// src/lib/document.ts
-var file = (url) => {
-  if (url.endsWith("/")) return `${url}index.html`;
-  if (/\.\w+$/.test(url)) return url;
-  return `${url}.html`;
-};
-var render = (registry) => (doc) => doc.template?.(registry)(doc) ?? doc.body(registry);
-
 // src/lib/url.ts
 import path2 from "path";
+
+// src/lib/string.ts
+var slugify = (x) => x.trim().replace(/\s+/g, "-").normalize("NFD").replace(/(\p{Diacritic})|[^A-Za-z0-9-]/gu, "").replace(/-+/g, "-").toLocaleLowerCase();
+var count = (c) => (x) => {
+  let n = 0;
+  for (let i = 0; i < x.length; i += 1) {
+    if (x.slice(i, i + c.length) === c) n += 1;
+  }
+  return n;
+};
+
+// src/lib/url.ts
 var dirrel = (root) => (file2) => {
   const rel = file2.replace(root, "").replaceAll(path2.win32.sep, path2.posix.sep);
   if (rel.length === 0) return "/";
@@ -186,61 +119,126 @@ var ext = (url) => (ext2) => {
   return `${url}${ext2}`;
 };
 
+// src/lib/document.ts
+var file = (url) => {
+  if (url.endsWith("/")) return `${url}index.html`;
+  if (/\.\w+$/.test(url)) return url;
+  return `${url}.html`;
+};
+var render = (registry) => (doc) => doc.template?.(registry)(doc) ?? doc.body(registry);
+
+// src/lib/array.ts
+var tree = (arr) => (parent) => {
+  const flat = [];
+  const nested = [];
+  for (const x of arr) {
+    const node = { parent: parent(x, nested), children: [], value: x };
+    flat.push(node);
+    if (node.parent) {
+      node.parent.children.push(node);
+    } else {
+      nested.push(node);
+    }
+  }
+  return { flat, nested };
+};
+
+// src/lib/registry.ts
+var Registry = class {
+  #map;
+  #tree;
+  constructor(docs) {
+    this.#tree = tree(docs)((doc, tree2) => {
+      let current = null;
+      const dirs = doc.url.split("/").filter(Boolean);
+      for (let i = 0; i < dirs.length; i += 1) {
+        const url = i === 0 ? "/" : `/${dirs.slice(0, i).join("/")}/`;
+        const parent = (current?.children ?? tree2).find((node) => node.value.url === url) ?? null;
+        if (parent) current = parent;
+      }
+      return current;
+    });
+    this.#map = new Map(this.#tree.flat.map((node) => [node.value.url, node]));
+  }
+  get list() {
+    return this.#tree.flat;
+  }
+  get tree() {
+    return this.#tree.nested;
+  }
+  get(url) {
+    return this.#map.get(url) ?? null;
+  }
+};
+
 // src/spider.ts
 var Spider = class {
-  #files;
-  #documents;
+  #entryPoints;
   #exclude;
-  #dirout;
   #root;
+  #outdir;
   #loaders;
+  #cache;
+  get #registry() {
+    if (!this.#cache.dirty) return this.#cache.registry;
+    const depth = count("/");
+    const docs = Array.from(this.#cache.documents.values()).sort((a, b) => {
+      if (depth(a.url) === depth(b.url)) return a.url.localeCompare(b.url);
+      return depth(a.url) - depth(b.url);
+    });
+    this.#cache.registry = new Registry(docs);
+    this.#cache.dirty = false;
+    return this.#cache.registry;
+  }
   constructor(options) {
-    this.#files = options.files;
-    this.#documents = /* @__PURE__ */ new Map();
-    this.#root = typeof options.root === "string" ? path3.normalize(options.root) : process.cwd();
+    this.#entryPoints = options.entryPoints;
     this.#exclude = options.exclude ?? [];
-    this.#dirout = options.dirout ?? null;
+    this.#root = typeof options.root === "string" ? path3.normalize(options.root) : process.cwd();
+    this.#outdir = options.outdir ?? null;
     this.#loaders = /* @__PURE__ */ new Map();
     this.#loaders.set(".js", js);
     this.#loaders.set(".ts", js);
     this.#loaders.set(".md", md);
     if (options.loader) Object.entries(options.loader).forEach(([ext2, loader]) => this.#loaders.set(ext2, loader));
+    this.#cache = {
+      documents: /* @__PURE__ */ new Map(),
+      registry: new Registry([]),
+      dirty: false
+    };
   }
-  /** Write registry to `dirout` */
-  async write() {
-    let file2 = null;
-    try {
-      if (typeof this.#dirout !== "string") throw new Error('Missing option "dirout"');
-      const registry = new Registry(Array.from(this.#documents.values()));
-      for (const node of registry.list) {
-        file2 = file(node.value.url);
-        await fsp2.mkdir(path3.dirname(path3.join(this.#dirout, file2)), { recursive: true });
-        await fsp2.writeFile(path3.join(this.#dirout, file2), render(registry)(node.value));
-      }
-      return registry;
-    } catch (cause) {
-      throw new Error(`Failed to write ${file2 ?? ""}`, { cause });
-    }
-  }
-  /** Load file into registry */
+  /** Load file */
   async load(file2) {
     try {
       const draft = await this.#loaders.get(path3.extname(file2))?.(file2);
       if (!draft) throw new Error(`Unknown file type "${path3.extname(file2)}"`);
       if (typeof draft.url !== "string") draft.url = create(dirrel(this.#root)(file2))(draft.title);
       if (typeof draft.ext === "string") draft.url = ext(draft.url)(draft.ext);
-      if (this.#documents.has(draft.url)) throw new Error(`Page already exists with url "${draft.url}"`);
-      this.#documents.set(draft.url, draft);
+      if (this.#cache.documents.has(draft.url)) throw new Error(`Page already exists with url "${draft.url}"`);
+      this.#cache.documents.set(draft.url, draft);
+      this.#cache.dirty = true;
       return draft;
     } catch (cause) {
       throw new Error(`Failed to load page "${file2}"`, { cause });
     }
   }
-  /** Build project */
+  /** Write documents to `outdir` */
+  async write() {
+    if (typeof this.#outdir !== "string") return;
+    for (const doc of this.#cache.documents.values()) {
+      try {
+        const file2 = path3.join(this.#outdir, file(doc.url));
+        await fsp2.mkdir(path3.dirname(file2), { recursive: true });
+        await fsp2.writeFile(file2, render(this.#registry)(doc));
+      } catch (cause) {
+        throw new Error(`Failed to write document "${doc.url}"`, { cause });
+      }
+    }
+  }
   async build() {
     try {
-      for await (const file2 of fsp2.glob(this.#files, { exclude: this.#exclude })) await this.load(file2);
-      return await this.write();
+      for await (const file2 of fsp2.glob(this.#entryPoints, { exclude: this.#exclude })) await this.load(file2);
+      await this.write();
+      return this.#cache.documents;
     } catch (cause) {
       throw new Error("Failed to build", { cause });
     }
@@ -248,6 +246,5 @@ var Spider = class {
 };
 export {
   Registry,
-  Spider as default,
-  loader_exports as loader
+  Spider as default
 };

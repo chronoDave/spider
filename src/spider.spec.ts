@@ -9,10 +9,10 @@ import Spider from './spider.ts';
 
 test('[Spider.load]', async t => {
   const spider = new Spider({
-    files: ['test/**/*.ts'],
+    entryPoints: ['test/**/*.ts'],
+    exclude: ['**/*.spec.ts', 'test/template/**/*'],
     root: 'test',
-    dirout: 'build',
-    exclude: ['**/*.spec.ts', 'test/template/**/*']
+    outdir: 'build'
   });
 
   await spider.load(path.resolve('test/blogs.ts'));
@@ -21,14 +21,14 @@ test('[Spider.load]', async t => {
 
 test('[Spider.build]', async (t: TestContext) => {
   const spider = new Spider({
-    files: ['test/**/*.ts', 'test/**/*.md'],
+    entryPoints: ['test/**/*.ts', 'test/**/*.md'],
+    exclude: ['**/*.spec.ts', 'test/template/**/*'],
     root: 'test',
-    dirout: 'build',
-    exclude: ['**/*.spec.ts', 'test/template/**/*']
+    outdir: 'build'
   });
-  const registry = await spider.build();
+  const result = await spider.build();
 
-  t.assert.equal(registry.list.length, 7);
+  t.assert.equal(result.size, 7);
   t.assert.ok(fs.existsSync(path.join('build/index.html')), 'root');
   t.assert.ok(fs.existsSync(path.join('build/blogs/index.html')), 'nested (js)');
   t.assert.ok(fs.existsSync(path.join('build/blogs/index.xml')), 'url (xml)');

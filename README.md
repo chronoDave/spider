@@ -42,10 +42,10 @@ Builds static site
 import Spider from '@chronocide/spark';
 
 const spider = new Spider({
-  files: ['src/**/*.ts', 'src/**/*.md'],
+  entryPoints: ['src/**/*.ts', 'src/**/*.md']
+  exclude: ['**/*.spec.ts'],
   root: 'src',
-  dirout: 'build',
-  exclude: ['**/*.spec.ts']
+  outdir: 'build',
 });
 
 spider.build();
@@ -99,20 +99,19 @@ export type Loader = (file: string) => Promise<Draft>;
 ```
 
 ```ts
-type SpiderOptions = {
-  files: string[];
+export type SpiderOptions = {
+  /** Supports [Node globs](https://github.com/isaacs/minimatch#features) */
+  entryPoints: string[];
+  /** Supports [Node globs](https://github.com/isaacs/minimatch#features) */
   exclude?: string[];
+  /** Output directory */
+  outdir?: string;
+  /** Base directory */
   root?: string;
-  dirout?: string;
+  /** File loaders */
   loader?: Record<string, Loader>;
 }
 ```
-
-- `files`, entry files. Supports [Node's glob pattern](https://nodejs.org/api/fs.html#fspromisesglobpattern-options).
-- `exclude`, entry file filter. Supports [Node's glob pattern](https://nodejs.org/api/fs.html#fspromisesglobpattern-options).
-- `root`, base directory relative to `files`.
-- `dirout`, output directory. If empty, does not write files.
-- `loader`, file loaders.
 
 #### `Loaders`
 
@@ -131,14 +130,14 @@ const loader: Loader = async context => ({
   created: new Date(),
   updated: null,
   template: registry => document => document.body(registry),
-  body: registry => `<a href="${registry.get('/').value.title}">Home</a>`
+  body: registry => `<a href="${registry.get('/')?.value.title}">Home</a>`
 });
 
 const spider = new Spider({
-  files: ['src/**/*.ts', 'src/**/*.md'],
-  root: 'src',
-  dirout: 'build',
+  entryPoints: ['src/**/*.ts', 'src/**/*.md'],
   exclude: ['**/*.spec.ts'],
+  root: 'src',
+  outdir: 'build',
   loader: {
     '.md': loader,
     '.ts': loader

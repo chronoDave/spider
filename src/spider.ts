@@ -1,23 +1,27 @@
 import type { Loader, Draft } from './lib/loader.ts';
 import type { Document, Template, Body } from './lib/document.ts';
+import type { Node, Tree } from './lib/array.ts';
 
-import fsp from 'fs/promises';
 import path from 'path';
+import fsp from 'fs/promises';
 
-import Registry from './lib/registry.ts';
 import * as loader from './lib/loader.ts';
-import * as document from './lib/document.ts';
 import * as url from './lib/url.ts';
+import * as document from './lib/document.ts';
+import * as string from './lib/string.ts';
+import Registry from './lib/registry.ts';
 
 export type {
   Loader,
   Draft,
   Document,
   Template,
-  Body
+  Body,
+  Node,
+  Tree
 };
 
-export { Registry, loader };
+export { Registry };
 
 export type Page = {
   title: string;
@@ -31,64 +35,68 @@ export type Page = {
 };
 
 export type SpiderOptions = {
-  /** File globs */
-  files: string[];
-  /** Filter out files / directories using glob patterns from src */
+  /** Supports [Node globs](https://github.com/isaacs/minimatch#features) */
+  entryPoints: string[];
+  /** Supports [Node globs](https://github.com/isaacs/minimatch#features) */
   exclude?: string[];
+  /** Output directory */
+  outdir?: string;
   /** Base directory */
   root?: string;
-  /** Output directory. If empty, does not write files */
-  dirout?: string;
   /** File loaders */
   loader?: Record<string, Loader>;
 };
 
 export default class Spider {
-  readonly #files: string[];
-  readonly #documents: Map<string, Document>;
+  readonly #entryPoints: string[];
   readonly #exclude: string[];
-  readonly #dirout: string | null;
   readonly #root: string;
+  readonly #outdir: string | null;
   readonly #loaders: Map<string, Loader>;
+  readonly #cache: {
+    dirty: boolean;
+    documents: Map<string, Document>;
+    registry: Registry;
+  };
+
+  get #registry(): Registry {
+    if (!this.#cache.dirty) return this.#cache.registry;
+
+    const depth = string.count('/');
+    const docs = Array.from(this.#cache.documents.values())
+      .sort((a, b) => {
+        if (depth(a.url) === depth(b.url)) return a.url.localeCompare(b.url);
+        return depth(a.url) - depth(b.url);
+      });
+
+    this.#cache.registry = new Registry(docs);
+    this.#cache.dirty = false;
+
+    return this.#cache.registry;
+  }
 
   constructor(options: SpiderOptions) {
-    this.#files = options.files;
-    this.#documents = new Map();
+    this.#entryPoints = options.entryPoints;
+    this.#exclude = options.exclude ?? [];
     this.#root = typeof options.root === 'string' ?
       path.normalize(options.root) :
       process.cwd();
-    this.#exclude = options.exclude ?? [];
-    this.#dirout = options.dirout ?? null;
+    this.#outdir = options.outdir ?? null;
 
     this.#loaders = new Map();
     this.#loaders.set('.js', loader.js);
     this.#loaders.set('.ts', loader.js);
     this.#loaders.set('.md', loader.md);
     if (options.loader) Object.entries(options.loader).forEach(([ext, loader]) => this.#loaders.set(ext, loader));
+
+    this.#cache = {
+      documents: new Map(),
+      registry: new Registry([]),
+      dirty: false
+    };
   }
 
-  /** Write registry to `dirout` */
-  async write() {
-    let file: string | null = null;
-
-    try {
-      if (typeof this.#dirout !== 'string') throw new Error('Missing option "dirout"');
-
-      const registry = new Registry(Array.from(this.#documents.values()));
-      for (const node of registry.list) {
-        file = document.file(node.value.url);
-
-        await fsp.mkdir(path.dirname(path.join(this.#dirout, file)), { recursive: true });
-        await fsp.writeFile(path.join(this.#dirout, file), document.render(registry)(node.value));
-      }
-
-      return registry;
-    } catch (cause) {
-      throw new Error(`Failed to write ${file ?? ''}`, { cause });
-    }
-  }
-
-  /** Load file into registry */
+  /** Load file */
   async load(file: string): Promise<Document> {
     try {
       const draft = await this.#loaders.get(path.extname(file))?.(file);
@@ -96,9 +104,10 @@ export default class Spider {
 
       if (typeof draft.url !== 'string') draft.url = url.create(url.dirrel(this.#root)(file))(draft.title);
       if (typeof draft.ext === 'string') draft.url = url.ext(draft.url)(draft.ext);
-      if (this.#documents.has(draft.url)) throw new Error(`Page already exists with url "${draft.url}"`);
+      if (this.#cache.documents.has(draft.url)) throw new Error(`Page already exists with url "${draft.url}"`);
 
-      this.#documents.set(draft.url, draft as Document);
+      this.#cache.documents.set(draft.url, draft as Document);
+      this.#cache.dirty = true;
 
       return draft as Document;
     } catch (cause) {
@@ -106,15 +115,30 @@ export default class Spider {
     }
   }
 
-  /** Build project */
+  /** Write documents to `outdir` */
+  async write() {
+    if (typeof this.#outdir !== 'string') return;
+
+    for (const doc of this.#cache.documents.values()) {
+      try {
+        const file = path.join(this.#outdir, document.file(doc.url));
+
+        await fsp.mkdir(path.dirname(file), { recursive: true });
+        await fsp.writeFile(file, document.render(this.#registry)(doc));
+      } catch (cause) {
+        throw new Error(`Failed to write document "${doc.url}"`, { cause });
+      }
+    }
+  }
+
   async build() {
     try {
-      for await (const file of fsp.glob(this.#files, { exclude: this.#exclude })) await this.load(file);
+      for await (const file of fsp.glob(this.#entryPoints, { exclude: this.#exclude })) await this.load(file);
+      await this.write();
 
-      return await this.write();
+      return this.#cache.documents;
     } catch (cause) {
       throw new Error('Failed to build', { cause });
     }
   }
 }
-
