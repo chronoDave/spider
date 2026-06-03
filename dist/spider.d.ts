@@ -68,7 +68,7 @@ declare class Spider {
 	/** Write documents to `outdir` */
 	write(): Promise<void>;
 	build(): Promise<Map<string, Document>>;
-	watch(): Promise<(() => void) | undefined>;
+	watch(): Promise<() => void>;
 }
 
 declare namespace loader {

@@ -262,12 +262,14 @@ var Spider = class {
       ignore: this.#exclude,
       signal: ac.signal
     });
-    for await (const event of watcher) {
-      if (typeof event.filename !== "string") return;
-      const file2 = path3.join(this.#root, event.filename);
-      await this.load(file2, true);
-      await this.write();
-    }
+    (async () => {
+      for await (const event of watcher) {
+        if (typeof event.filename !== "string") continue;
+        const file2 = path3.join(this.#root, event.filename);
+        await this.load(file2, true);
+        await this.write();
+      }
+    })();
     return () => ac.abort();
   }
 };
