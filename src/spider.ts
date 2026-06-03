@@ -142,7 +142,7 @@ export default class Spider {
     }
   }
 
-  async watch() {
+  async watch(): Promise<() => void> {
     await this.build();
 
     const ac = new AbortController();
@@ -152,13 +152,15 @@ export default class Spider {
       signal: ac.signal
     });
 
-    for await (const event of watcher) {
-      if (typeof event.filename !== 'string') return;
+    (async () => {
+      for await (const event of watcher) {
+        if (typeof event.filename !== 'string') continue;
 
-      const file = path.join(this.#root, event.filename);
-      await this.load(file, true);
-      await this.write();
-    }
+        const file = path.join(this.#root, event.filename);
+        await this.load(file, true);
+        await this.write();
+      }
+    })();
 
     return () => ac.abort();
   }
