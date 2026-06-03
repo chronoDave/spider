@@ -21,7 +21,7 @@ export type {
   Tree
 };
 
-export { Registry };
+export { Registry, loader };
 
 export type Page = {
   title: string;
