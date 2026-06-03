@@ -1,8 +1,19 @@
+var __defProp = Object.defineProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
 // src/spider.ts
 import path3 from "path";
 import fsp2 from "fs/promises";
 
 // src/lib/loader.ts
+var loader_exports = {};
+__export(loader_exports, {
+  js: () => js,
+  md: () => md
+});
 import fsp from "fs/promises";
 import path from "path";
 
@@ -246,5 +257,6 @@ var Spider = class {
 };
 export {
   Registry,
-  Spider as default
+  Spider as default,
+  loader_exports as loader
 };

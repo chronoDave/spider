@@ -36,6 +36,8 @@ export type Draft = {
 	body: Body;
 };
 export type Loader = (file: string) => Promise<Draft>;
+declare const js: Loader;
+declare const md: Loader;
 export type Page = {
 	title: string;
 	description?: string;
@@ -68,8 +70,13 @@ declare class Spider {
 	build(): Promise<Map<string, Document>>;
 }
 
+declare namespace loader {
+	export { Draft, Loader, js, md };
+}
+
 export {
 	Spider as default,
+	loader,
 };
 
 export {};
