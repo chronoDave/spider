@@ -218,13 +218,13 @@ var Spider = class {
     };
   }
   /** Load file */
-  async load(file2) {
+  async load(file2, force) {
     try {
       const draft = await this.#loaders.get(path3.extname(file2))?.(file2);
       if (!draft) throw new Error(`Unknown file type "${path3.extname(file2)}"`);
       if (typeof draft.url !== "string") draft.url = create(dirrel(this.#root)(file2))(draft.title);
       if (typeof draft.ext === "string") draft.url = ext(draft.url)(draft.ext);
-      if (this.#cache.documents.has(draft.url)) throw new Error(`Page already exists with url "${draft.url}"`);
+      if (!force && this.#cache.documents.has(draft.url)) throw new Error(`Page already exists with url "${draft.url}"`);
       this.#cache.documents.set(draft.url, draft);
       this.#cache.dirty = true;
       return draft;
@@ -253,6 +253,22 @@ var Spider = class {
     } catch (cause) {
       throw new Error("Failed to build", { cause });
     }
+  }
+  async watch() {
+    await this.build();
+    const ac = new AbortController();
+    const watcher = fsp2.watch(this.#root, {
+      recursive: true,
+      ignore: this.#exclude,
+      signal: ac.signal
+    });
+    for await (const event of watcher) {
+      if (typeof event.filename !== "string") return;
+      const file2 = path3.join(this.#root, event.filename);
+      await this.load(file2, true);
+      await this.write();
+    }
+    return () => ac.abort();
   }
 };
 export {

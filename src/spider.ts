@@ -97,14 +97,14 @@ export default class Spider {
   }
 
   /** Load file */
-  async load(file: string): Promise<Document> {
+  async load(file: string, force?: boolean): Promise<Document> {
     try {
       const draft = await this.#loaders.get(path.extname(file))?.(file);
       if (!draft) throw new Error(`Unknown file type "${path.extname(file)}"`);
 
       if (typeof draft.url !== 'string') draft.url = url.create(url.dirrel(this.#root)(file))(draft.title);
       if (typeof draft.ext === 'string') draft.url = url.ext(draft.url)(draft.ext);
-      if (this.#cache.documents.has(draft.url)) throw new Error(`Page already exists with url "${draft.url}"`);
+      if (!force && this.#cache.documents.has(draft.url)) throw new Error(`Page already exists with url "${draft.url}"`);
 
       this.#cache.documents.set(draft.url, draft as Document);
       this.#cache.dirty = true;
@@ -140,5 +140,26 @@ export default class Spider {
     } catch (cause) {
       throw new Error('Failed to build', { cause });
     }
+  }
+
+  async watch() {
+    await this.build();
+
+    const ac = new AbortController();
+    const watcher = fsp.watch(this.#root, {
+      recursive: true,
+      ignore: this.#exclude,
+      signal: ac.signal
+    });
+
+    for await (const event of watcher) {
+      if (typeof event.filename !== 'string') return;
+
+      const file = path.join(this.#root, event.filename);
+      await this.load(file, true);
+      await this.write();
+    }
+
+    return () => ac.abort();
   }
 }

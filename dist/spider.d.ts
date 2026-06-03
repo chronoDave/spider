@@ -64,10 +64,11 @@ declare class Spider {
 	#private;
 	constructor(options: SpiderOptions);
 	/** Load file */
-	load(file: string): Promise<Document>;
+	load(file: string, force?: boolean): Promise<Document>;
 	/** Write documents to `outdir` */
 	write(): Promise<void>;
 	build(): Promise<Map<string, Document>>;
+	watch(): Promise<(() => void) | undefined>;
 }
 
 declare namespace loader {
