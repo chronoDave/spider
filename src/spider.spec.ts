@@ -28,7 +28,8 @@ test('[Spider.build]', async (t: TestContext) => {
   });
   const result = await spider.build();
 
-  t.assert.equal(result.size, 7);
+  t.assert.equal(result.size, 7, 'finds all files');
+  t.assert.ok(Object.keys(result).every(url => url.startsWith('/')), 'all paths are root relative');
   t.assert.ok(fs.existsSync(path.join('build/index.html')), 'root');
   t.assert.ok(fs.existsSync(path.join('build/blogs/index.html')), 'nested (js)');
   t.assert.ok(fs.existsSync(path.join('build/blogs/index.xml')), 'url (xml)');
