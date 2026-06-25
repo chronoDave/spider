@@ -112,22 +112,21 @@ var count = (c) => (x) => {
 };
 
 // src/lib/url.ts
-var dirrel = (root) => (file2) => {
-  const rel = file2.replace(root, "").replaceAll(path2.win32.sep, path2.posix.sep);
-  if (rel.length === 0) return "/";
-  const dir = path2.dirname(rel);
-  if (dir.endsWith("/")) return dir;
-  return `${dir}/`;
+var relative = (from) => (to) => {
+  const rel = path2.posix.relative(
+    from.replaceAll(path2.sep, path2.posix.sep),
+    to.replaceAll(path2.sep, path2.posix.sep)
+  );
+  return `/${rel.length === 0 ? rel : path2.dirname(rel)}`;
 };
-var create = (dir) => (title) => {
-  const slug = slugify(title);
-  if (slug === "index" || dir.slice(0, -1).endsWith(slug)) return dir;
-  return `${dir}${slug}/`;
-};
-var ext = (url) => (ext2) => {
-  if (/\.\w+$/.test(url)) return url.replace(/\.\w+$/, ext2);
-  if (url.endsWith("/")) return `${url}index${ext2}`;
-  return `${url}${ext2}`;
+var create = (dir) => (draft) => {
+  const name = maybe(path2.posix.parse)(draft.url)?.name ?? slugify(draft.title);
+  const ext = draft.ext ?? maybe(path2.posix.parse)(draft.url)?.ext ?? ".html";
+  return path2.posix.normalize(path2.posix.format({
+    dir: name === "index" || dir.endsWith(name) ? dir : path2.posix.join(dir, name),
+    name: "index",
+    ext
+  }));
 };
 
 // src/lib/document.ts
@@ -210,7 +209,7 @@ var Spider = class {
     this.#loaders.set(".js", js);
     this.#loaders.set(".ts", js);
     this.#loaders.set(".md", md);
-    if (options.loader) Object.entries(options.loader).forEach(([ext2, loader]) => this.#loaders.set(ext2, loader));
+    if (options.loader) Object.entries(options.loader).forEach(([ext, loader]) => this.#loaders.set(ext, loader));
     this.#cache = {
       documents: /* @__PURE__ */ new Map(),
       registry: new Registry([]),
@@ -222,8 +221,7 @@ var Spider = class {
     try {
       const draft = await this.#loaders.get(path3.extname(file2))?.(file2);
       if (!draft) throw new Error(`Unknown file type "${path3.extname(file2)}"`);
-      if (typeof draft.url !== "string") draft.url = create(dirrel(this.#root)(file2))(draft.title);
-      if (typeof draft.ext === "string") draft.url = ext(draft.url)(draft.ext);
+      if (typeof draft.url !== "string") draft.url = create(relative(this.#root)(file2))(draft);
       if (!force && this.#cache.documents.has(draft.url)) throw new Error(`Page already exists with url "${draft.url}"`);
       this.#cache.documents.set(draft.url, draft);
       this.#cache.dirty = true;
