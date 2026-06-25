@@ -10,6 +10,7 @@ import * as url from './lib/url.ts';
 import * as document from './lib/document.ts';
 import * as string from './lib/string.ts';
 import Registry from './lib/registry.ts';
+import { maybe } from './lib/fn.ts';
 
 export type {
   Loader,
@@ -102,8 +103,7 @@ export default class Spider {
       const draft = await this.#loaders.get(path.extname(file))?.(file);
       if (!draft) throw new Error(`Unknown file type "${path.extname(file)}"`);
 
-      if (typeof draft.url !== 'string') draft.url = url.create(url.dirrel(this.#root)(file))(draft.title);
-      if (typeof draft.ext === 'string') draft.url = url.ext(draft.url)(draft.ext);
+      if (typeof draft.url !== 'string') draft.url = url.create(url.relative(this.#root)(file))(draft);
       if (!force && this.#cache.documents.has(draft.url)) throw new Error(`Page already exists with url "${draft.url}"`);
 
       this.#cache.documents.set(draft.url, draft as Document);

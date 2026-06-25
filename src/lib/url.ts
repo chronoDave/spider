@@ -1,44 +1,28 @@
+import type { Draft } from './loader.ts';
+
 import path from 'path';
 
+import { maybe } from './fn.ts';
 import { slugify } from './string.ts';
 
 /** Get posix directory relative to root */
-export const dirrel = (root: string) =>
-  (file: string): string => {
-    const rel = file.replace(root, '').replaceAll(path.win32.sep, path.posix.sep);
-    if (rel.length === 0) return '/';
+export const relative = (from: string) =>
+  (to: string): string => path.posix.dirname(path.posix.relative(
+    from.replaceAll(path.sep, path.posix.sep),
+    to.replaceAll(path.sep, path.posix.sep)
+  ));
 
-    const dir = path.dirname(rel);
-    if (dir.endsWith('/')) return dir;
-
-    return `${dir}/`;
-  };
-
-/**
- * Generate url from title and directory. Will always end with `/`
- *
- * - `/`, `about` => `/about/`
- * - `/`, `index` => `/`
- * - `/about/`, `me` => `/about/me/`
- * - `/about/`, `about` => `/about/`
- * - `/about`, `index` => `/about/`
- */
+/** Create path from draft */
 export const create = (dir: string) =>
-  (title: string): string => {
-    const slug = slugify(title);
+  (draft: Draft) => {
+    const name = maybe(path.posix.parse)(draft.url)?.name ?? slugify(draft.title);
+    const ext = draft.ext ?? maybe(path.posix.parse)(draft.url)?.ext ?? '.html';
 
-    if (
-      slug === 'index' ||
-      dir.slice(0, -1).endsWith(slug)
-    ) return dir;
-
-    return `${dir}${slug}/`;
-  };
-
-/** Append file extension to url, replace if ext already exists */
-export const ext = (url: string) =>
-  (ext: string): string => {
-    if (/\.\w+$/.test(url)) return url.replace(/\.\w+$/, ext);
-    if (url.endsWith('/')) return `${url}index${ext}`;
-    return `${url}${ext}`;
+    return path.posix.format({
+      dir: name === 'index' ?
+        dir :
+        path.posix.join(dir, name),
+      name: 'index',
+      ext
+    });
   };
