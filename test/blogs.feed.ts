@@ -1,6 +1,6 @@
-import type { Page } from '../src/spider.js';
+import type { Draft } from '../src/spider.js';
 
-const page: Page = {
+const page: Draft = {
   title: 'Blogs',
   ext: '.xml',
   template: registry => document => document.body(registry),
