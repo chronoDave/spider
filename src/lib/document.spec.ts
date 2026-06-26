@@ -6,14 +6,17 @@ import Document from './document.ts';
 import Registry from './registry.ts';
 
 const result = (options: { title: string; url?: string; ext?: string }): LoaderResult => ({
-  title: options.title,
-  url: options.url ?? null,
-  ext: options.ext ?? null,
-  description: null,
-  created: null,
-  updated: null,
-  body: () => '',
-  template: () => () => ''
+  dependencies: new Set(),
+  page: {
+    title: options.title,
+    url: options.url ?? null,
+    ext: options.ext ?? null,
+    description: null,
+    created: null,
+    updated: null,
+    body: () => '',
+    template: () => () => ''
+  }
 });
 
 test('[Document.file]', t => {
@@ -141,14 +144,17 @@ test('[Document.render]', t => {
 
   t.assert.equal(
     new Document('/', {
-      title: 'a',
-      description: null,
-      url: '/',
-      ext: null,
-      created: new Date(),
-      updated: null,
-      template: null,
-      body: () => 'a'
+      dependencies: new Set(),
+      page: {
+        title: 'a',
+        description: null,
+        url: '/',
+        ext: null,
+        created: new Date(),
+        updated: null,
+        template: null,
+        body: () => 'a'
+      }
     }).render(registry),
     'a',
     'body'
@@ -156,14 +162,17 @@ test('[Document.render]', t => {
 
   t.assert.equal(
     new Document('/', {
-      title: 'a',
-      description: null,
-      url: '/',
-      ext: null,
-      created: new Date(),
-      updated: null,
-      template: () => () => 'b',
-      body: () => 'a'
+      dependencies: new Set(),
+      page: {
+        title: 'a',
+        description: null,
+        url: '/',
+        ext: null,
+        created: new Date(),
+        updated: null,
+        template: () => () => 'b',
+        body: () => 'a'
+      }
     }).render(registry),
     'b',
     'template'

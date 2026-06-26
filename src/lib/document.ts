@@ -39,8 +39,8 @@ export default class Document {
    * - `/about` + `about.xml` => `/about/about.xml`
    */
   static file(dir: string, result: LoaderResult) {
-    const ext = result.ext ?? (maybe(path.parse)(result.url)?.ext || null);
-    const name = maybe(path.parse)(result.url)?.name ?? slugify(result.title);
+    const ext = result.page.ext ?? (maybe(path.parse)(result.page.url)?.ext || null);
+    const name = maybe(path.parse)(result.page.url)?.name ?? slugify(result.page.title);
 
     return path.normalize(path.format({
       dir: ext || name === 'index' || dir.endsWith(name) ?
@@ -65,7 +65,7 @@ export default class Document {
    * - `/about` + `about.xml` => `/about/about.xml`
    */
   static url(file: string, result: LoaderResult) {
-    let url = result.url ?? file;
+    let url = result.page.url ?? file;
 
     const { ext, dir, name } = path.parse(file);
     if (ext === '.html') url = path.join(dir, name === 'index' ? '/' : name);
@@ -73,17 +73,17 @@ export default class Document {
     return url;
   }
 
-  constructor(root: string, result: LoaderResult) {
-    this.#template = result.template;
+  constructor(dir: string, result: LoaderResult) {
+    this.#template = result.page.template;
 
-    this.file = Document.file(root, result);
+    this.file = Document.file(dir, result);
     this.page = {
-      title: result.title,
-      description: result.description,
+      title: result.page.title,
+      description: result.page.description,
       url: Document.url(this.file, result),
-      created: result.created,
-      updated: result.updated,
-      body: result.body
+      created: result.page.created,
+      updated: result.page.updated,
+      body: result.page.body
     };
   }
 
