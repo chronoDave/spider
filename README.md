@@ -34,6 +34,34 @@ npm i @chronocide/spider
 
 ### Usage
 
+#### URL / path resolution
+
+File paths and url's are automatically generated, but can be overwritten manually. `spider` uses the following rules:
+
+##### Path
+
+- `/` + `index` => `/index.html`
+- `/` + `about` => `/about/index.html`
+- `/` + `about.html` => `/about.html`
+- `/` + `about.xml` => `/about.xml`
+- `/about` + `index` => `/about/index.html`
+- `/about` + `me` => `/about/me/index.html`
+- `/about` + `about` => `/about/index.html`
+- `/about` + `about.html` => `/about/about.html`
+- `/about` + `about.xml` => `/about/about.xml`
+
+##### URL
+
+- `/` + `index` => `/`
+- `/` + `about` => `/about/`
+- `/` + `about.html` => `/about`
+- `/` + `about.xml` => `/about.xml`
+- `/about` + `index` => `/about/`
+- `/about` + `me` => `/about/me/`
+- `/about` + `about` => `/about/`
+- `/about` + `about.html` => `/about/about`
+- `/about` + `about.xml` => `/about/about.xml`
+
 #### `spider`
 
 Builds static site
@@ -52,7 +80,7 @@ spider.build();
 ```
 
 ```ts
-import type { Template, Page } from '@chronocide/spider';
+import type { Template, Draft } from '@chronocide/spider';
 
 import h from '@chronocide/spark';
 
@@ -66,13 +94,13 @@ const template: Template = registry =>
     return `<!DOCTYPE html>${template}`;
   };
 
-const page: Page = {
+const page: Draft = {
   title: 'Home',
   url: '/',
   template,
   body: registry => h('main')()(
     h('p')()('This is a page'),
-    h('a')({ href: registry.node('/about')?.value..url })(registry.node('/about')?.value.title)
+    h('a')({ href: registry.node('/about/')?.value.url })(registry.node('/about')?.value.title)
   )
 };
 
@@ -82,11 +110,11 @@ export default page;
 ##### `SpiderOptions`
 
 ```ts
-export type Draft = {
+export type LoaderResult = {
   title: string;
   description: string | null;
   url: string | null;
-  ext: string;
+  ext: string | null;
   created: Date | null;
   updated: Date | null;
   template: Template | null;
@@ -95,7 +123,7 @@ export type Draft = {
 ```
 
 ```ts
-export type Loader = (file: string) => Promise<Draft>;
+export type Loader = (file: string) => Promise<LoaderResult>;
 ```
 
 ```ts

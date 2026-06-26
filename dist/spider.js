@@ -5,8 +5,90 @@ var __export = (target, all) => {
 };
 
 // src/spider.ts
-import path3 from "path";
+import path4 from "path";
 import fsp2 from "fs/promises";
+
+// src/lib/document.ts
+import path from "path/posix";
+
+// src/lib/fn.ts
+var maybe = (fn2) => (x) => {
+  if (x === null || x === void 0) return null;
+  return fn2(x);
+};
+
+// src/lib/string.ts
+var slugify = (x) => x.trim().replace(/\s+/g, "-").normalize("NFD").replace(/(\p{Diacritic})|[^A-Za-z0-9-]/gu, "").replace(/-+/g, "-").toLocaleLowerCase();
+var count = (c) => (x) => {
+  let n = 0;
+  for (let i = 0; i < x.length; i += 1) {
+    if (x.slice(i, i + c.length) === c) n += 1;
+  }
+  return n;
+};
+
+// src/lib/document.ts
+var Document = class _Document {
+  #template;
+  file;
+  page;
+  /**
+   * Create document file path
+   *
+   * - `/` + `index` => `/index.html`
+   * - `/` + `about` => `/about/index.html`
+   * - `/` + `about.html` => `/about.html`
+   * - `/` + `about.xml` => `/about.xml`
+   * - `/about` + `index` => `/about/index.html`
+   * - `/about` + `me` => `/about/me/index.html`
+   * - `/about` + `about` => `/about/index.html`
+   * - `/about` + `about.html` => `/about/about.html`
+   * - `/about` + `about.xml` => `/about/about.xml`
+   */
+  static file(dir, result) {
+    const ext = result.ext ?? (maybe(path.parse)(result.url)?.ext || null);
+    const name = maybe(path.parse)(result.url)?.name ?? slugify(result.title);
+    return path.normalize(path.format({
+      dir: ext || name === "index" || dir.endsWith(name) ? dir : path.join(dir, name),
+      name: ext ? name : "index",
+      ext: ext ?? ".html"
+    }));
+  }
+  /**
+   * Create document url
+   *
+   * - `/` + `index` => `/`
+   * - `/` + `about` => `/about/`
+   * - `/` + `about.html` => `/about`
+   * - `/` + `about.xml` => `/about.xml`
+   * - `/about` + `index` => `/about/`
+   * - `/about` + `me` => `/about/me/`
+   * - `/about` + `about` => `/about/`
+   * - `/about` + `about.html` => `/about/about`
+   * - `/about` + `about.xml` => `/about/about.xml`
+   */
+  static url(file, result) {
+    let url = result.url ?? file;
+    const { ext, dir, name } = path.parse(file);
+    if (ext === ".html") url = path.join(dir, name === "index" ? "/" : name);
+    return url;
+  }
+  constructor(root, result) {
+    this.#template = result.template;
+    this.file = _Document.file(root, result);
+    this.page = {
+      title: result.title,
+      description: result.description,
+      url: _Document.url(this.file, result),
+      created: result.created,
+      updated: result.updated,
+      body: result.body
+    };
+  }
+  render(registry) {
+    return this.#template?.(registry)(this.page) ?? this.page.body(registry);
+  }
+};
 
 // src/lib/loader.ts
 var loader_exports = {};
@@ -15,7 +97,7 @@ __export(loader_exports, {
   md: () => md
 });
 import fsp from "fs/promises";
-import path from "path";
+import path2 from "path";
 
 // src/lib/date.ts
 var truncateDay = (x) => {
@@ -52,16 +134,10 @@ var date = (label) => (x) => {
   return x;
 };
 
-// src/lib/fn.ts
-var maybe = (fn2) => (x) => {
-  if (x === null || x === void 0) return null;
-  return fn2(x);
-};
-
 // src/lib/loader.ts
-var js = async (file2) => {
+var js = async (file) => {
   try {
-    const raw = await import(`file://${path.resolve(file2)}?${Date.now()}`);
+    const raw = await import(`file://${path2.resolve(file)}?${Date.now()}`);
     const module = object("default")(raw.default);
     return {
       title: string("title")(module.title),
@@ -74,12 +150,12 @@ var js = async (file2) => {
       body: fn("body")(module.body)
     };
   } catch (err2) {
-    throw new Error(`Failed to load ${file2}`, { cause: err2 });
+    throw new Error(`Failed to load ${file}`, { cause: err2 });
   }
 };
-var md = async (file2) => {
+var md = async (file) => {
   try {
-    const raw = await fsp.readFile(file2, "utf-8");
+    const raw = await fsp.readFile(file, "utf-8");
     const header = /^-{3,}(.+)-{3,}/gs.exec(raw)?.[1];
     if (typeof header !== "string") throw new Error("Missing metadata");
     const metadata = Object.fromEntries(header.split(/\r?\n/).map((line) => line.split(":").map((x) => x.trim())));
@@ -94,48 +170,19 @@ var md = async (file2) => {
       body: () => raw.replace(/^-{3,}.+-{3,}(\r?\n)*/gs, "")
     };
   } catch (err2) {
-    throw new Error(`Failed to load ${file2}`, { cause: err2 });
+    throw new Error(`Failed to load ${file}`, { cause: err2 });
   }
 };
 
 // src/lib/url.ts
-import path2 from "path";
-
-// src/lib/string.ts
-var slugify = (x) => x.trim().replace(/\s+/g, "-").normalize("NFD").replace(/(\p{Diacritic})|[^A-Za-z0-9-]/gu, "").replace(/-+/g, "-").toLocaleLowerCase();
-var count = (c) => (x) => {
-  let n = 0;
-  for (let i = 0; i < x.length; i += 1) {
-    if (x.slice(i, i + c.length) === c) n += 1;
-  }
-  return n;
-};
-
-// src/lib/url.ts
+import path3 from "path";
 var relative = (from) => (to) => {
-  const rel = path2.posix.relative(
-    from.replaceAll(path2.sep, path2.posix.sep),
-    to.replaceAll(path2.sep, path2.posix.sep)
+  const rel = path3.posix.relative(
+    from.replaceAll(path3.sep, path3.posix.sep),
+    to.replaceAll(path3.sep, path3.posix.sep)
   );
-  return `/${rel.length === 0 ? rel : path2.dirname(rel)}`;
+  return `/${rel.length === 0 ? rel : path3.dirname(rel)}`;
 };
-var create = (dir) => (draft) => {
-  const name = maybe(path2.posix.parse)(draft.url)?.name ?? slugify(draft.title);
-  const ext = draft.ext ?? maybe(path2.posix.parse)(draft.url)?.ext ?? ".html";
-  return path2.posix.normalize(path2.posix.format({
-    dir: name === "index" || dir.endsWith(name) ? dir : path2.posix.join(dir, name),
-    name: "index",
-    ext
-  }));
-};
-
-// src/lib/document.ts
-var file = (url) => {
-  if (url.endsWith("/")) return `${url}index.html`;
-  if (/\.\w+$/.test(url)) return url;
-  return `${url}.html`;
-};
-var render = (registry) => (doc) => doc.template?.(registry)(doc) ?? doc.body(registry);
 
 // src/lib/array.ts
 var tree = (arr) => (parent) => {
@@ -157,10 +204,10 @@ var tree = (arr) => (parent) => {
 var Registry = class {
   #map;
   #tree;
-  constructor(docs) {
-    this.#tree = tree(docs)((doc, tree2) => {
+  constructor(pages) {
+    this.#tree = tree(pages)((page, tree2) => {
       let current = null;
-      const dirs = doc.url.split("/").filter(Boolean);
+      const dirs = page.url.split("/").filter(Boolean);
       for (let i = 0; i < dirs.length; i += 1) {
         const url = i === 0 ? "/" : `/${dirs.slice(0, i).join("/")}/`;
         const parent = (current?.children ?? tree2).find((node) => node.value.url === url) ?? null;
@@ -192,18 +239,18 @@ var Spider = class {
   get #registry() {
     if (!this.#cache.dirty) return this.#cache.registry;
     const depth = count("/");
-    const docs = Array.from(this.#cache.documents.values()).sort((a, b) => {
+    const pages = Array.from(this.#cache.documents.values()).map((document) => document.page).sort((a, b) => {
       if (depth(a.url) === depth(b.url)) return a.url.localeCompare(b.url);
       return depth(a.url) - depth(b.url);
     });
-    this.#cache.registry = new Registry(docs);
+    this.#cache.registry = new Registry(pages);
     this.#cache.dirty = false;
     return this.#cache.registry;
   }
   constructor(options) {
     this.#entryPoints = options.entryPoints;
     this.#exclude = options.exclude ?? [];
-    this.#root = typeof options.root === "string" ? path3.normalize(options.root) : process.cwd();
+    this.#root = typeof options.root === "string" ? path4.normalize(options.root) : process.cwd();
     this.#outdir = options.outdir ?? null;
     this.#loaders = /* @__PURE__ */ new Map();
     this.#loaders.set(".js", js);
@@ -217,35 +264,35 @@ var Spider = class {
     };
   }
   /** Load file */
-  async load(file2, force) {
+  async load(file, force) {
     try {
-      const draft = await this.#loaders.get(path3.extname(file2))?.(file2);
-      if (!draft) throw new Error(`Unknown file type "${path3.extname(file2)}"`);
-      if (typeof draft.url !== "string") draft.url = create(relative(this.#root)(file2))(draft);
-      if (!force && this.#cache.documents.has(draft.url)) throw new Error(`Page already exists with url "${draft.url}"`);
-      this.#cache.documents.set(draft.url, draft);
+      const draft = await this.#loaders.get(path4.extname(file))?.(file);
+      if (!draft) throw new Error(`Unknown file type "${path4.extname(file)}"`);
+      const document = new Document(relative(this.#root)(file), draft);
+      if (!force && this.#cache.documents.has(document.page.url)) throw new Error(`Page already exists with url "${draft.url}"`);
+      this.#cache.documents.set(document.page.url, document);
       this.#cache.dirty = true;
-      return draft;
+      return document;
     } catch (cause) {
-      throw new Error(`Failed to load page "${file2}"`, { cause });
+      throw new Error(`Failed to load page "${file}"`, { cause });
     }
   }
   /** Write documents to `outdir` */
   async write() {
     if (typeof this.#outdir !== "string") return;
-    for (const doc of this.#cache.documents.values()) {
+    for (const document of this.#cache.documents.values()) {
       try {
-        const file2 = path3.join(this.#outdir, file(doc.url));
-        await fsp2.mkdir(path3.dirname(file2), { recursive: true });
-        await fsp2.writeFile(file2, render(this.#registry)(doc));
+        const file = path4.join(this.#outdir, document.file);
+        await fsp2.mkdir(path4.dirname(file), { recursive: true });
+        await fsp2.writeFile(file, document.render(this.#registry));
       } catch (cause) {
-        throw new Error(`Failed to write document "${doc.url}"`, { cause });
+        throw new Error(`Failed to write document "${document.file}"`, { cause });
       }
     }
   }
   async build() {
     try {
-      for await (const file2 of fsp2.glob(this.#entryPoints, { exclude: this.#exclude })) await this.load(file2);
+      for await (const file of fsp2.glob(this.#entryPoints, { exclude: this.#exclude })) await this.load(file);
       await this.write();
       return this.#cache.documents;
     } catch (cause) {
@@ -263,8 +310,8 @@ var Spider = class {
     (async () => {
       for await (const event of watcher) {
         if (typeof event.filename !== "string") continue;
-        const file2 = path3.join(this.#root, event.filename);
-        await this.load(file2, true);
+        const file = path4.join(this.#root, event.filename);
+        await this.load(file, true);
         await this.write();
       }
     })();

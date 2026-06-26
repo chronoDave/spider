@@ -9,23 +9,57 @@ export type Tree<T> = {
 };
 export declare class Registry {
 	#private;
-	constructor(docs: Document[]);
-	get list(): Node<Document>[];
-	get tree(): Node<Document>[];
-	get(url: string): Node<Document> | null;
+	constructor(pages: Page[]);
+	get list(): Node<Page>[];
+	get tree(): Node<Page>[];
+	get(url: string): Node<Page> | null;
 }
-export type Template = (registry: Registry) => (doc: Document) => string;
+export type Template = (registry: Registry) => (page: Page) => string;
 export type Body = (registry: Registry) => string;
-export type Document = {
+export type Page = {
 	readonly title: string;
 	readonly description: string | null;
 	readonly url: string;
 	readonly created: Date | null;
 	readonly updated: Date | null;
-	readonly template: Template | null;
 	readonly body: Body;
 };
-export type Draft = {
+export declare class Document {
+	#private;
+	readonly file: string;
+	readonly page: Page;
+	/**
+	 * Create document file path
+	 *
+	 * - `/` + `index` => `/index.html`
+	 * - `/` + `about` => `/about/index.html`
+	 * - `/` + `about.html` => `/about.html`
+	 * - `/` + `about.xml` => `/about.xml`
+	 * - `/about` + `index` => `/about/index.html`
+	 * - `/about` + `me` => `/about/me/index.html`
+	 * - `/about` + `about` => `/about/index.html`
+	 * - `/about` + `about.html` => `/about/about.html`
+	 * - `/about` + `about.xml` => `/about/about.xml`
+	 */
+	static file(dir: string, result: LoaderResult): string;
+	/**
+	 * Create document url
+	 *
+	 * - `/` + `index` => `/`
+	 * - `/` + `about` => `/about/`
+	 * - `/` + `about.html` => `/about`
+	 * - `/` + `about.xml` => `/about.xml`
+	 * - `/about` + `index` => `/about/`
+	 * - `/about` + `me` => `/about/me/`
+	 * - `/about` + `about` => `/about/`
+	 * - `/about` + `about.html` => `/about/about`
+	 * - `/about` + `about.xml` => `/about/about.xml`
+	 */
+	static url(file: string, result: LoaderResult): string;
+	constructor(root: string, result: LoaderResult);
+	render(registry: Registry): string;
+}
+export type LoaderResult = {
 	title: string;
 	description: string | null;
 	url: string | null;
@@ -35,10 +69,10 @@ export type Draft = {
 	template: Template | null;
 	body: Body;
 };
-export type Loader = (file: string) => Promise<Draft>;
+export type Loader = (file: string) => Promise<LoaderResult>;
 declare const js: Loader;
 declare const md: Loader;
-export type Page = {
+export type Draft = {
 	title: string;
 	description?: string;
 	url?: string;
@@ -72,7 +106,7 @@ declare class Spider {
 }
 
 declare namespace loader {
-	export { Draft, Loader, js, md };
+	export { Loader, LoaderResult, js, md };
 }
 
 export {

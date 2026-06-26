@@ -30,12 +30,13 @@ test('[Spider.build]', async (t: TestContext) => {
 
   t.assert.equal(result.size, 7, 'finds all files');
   t.assert.ok(Object.keys(result).every(url => url.startsWith('/')), 'all paths are root relative');
-  t.assert.ok(fs.existsSync(path.join('build/index.html')), 'root');
-  t.assert.ok(fs.existsSync(path.join('build/blogs/index.html')), 'nested (js)');
-  t.assert.ok(fs.existsSync(path.join('build/blogs/index.xml')), 'url (xml)');
-  t.assert.ok(fs.existsSync(path.join('build/blogs/blog-a/index.html')), 'nested (md)');
-  t.assert.ok(fs.existsSync(path.join('build/about.html')), 'url (html)');
-  t.assert.ok(fs.existsSync(path.join('build/about.xml')), 'url (xml)');
+
+  t.assert.ok(fs.existsSync('build/index.html'), 'root');
+  t.assert.ok(fs.existsSync('build/blogs/index.html'), 'nested (js)');
+  t.assert.ok(fs.existsSync('build/blogs.xml'), 'url (xml)');
+  t.assert.ok(fs.existsSync('build/blogs/blog-a/index.html'), 'nested (md)');
+  t.assert.ok(fs.existsSync('build/about.html'), 'url (html)');
+  t.assert.ok(fs.existsSync('build/about.xml'), 'url (xml)');
 
   await fsp.rm('build', { recursive: true, force: true });
 });

@@ -1,30 +1,30 @@
-import type { Loader, Draft } from './lib/loader.ts';
-import type { Document, Template, Body } from './lib/document.ts';
+import type { Loader, LoaderResult } from './lib/loader.ts';
+import type { Template, Body, Page } from './lib/document.ts';
 import type { Node, Tree } from './lib/array.ts';
 
 import path from 'path';
 import fsp from 'fs/promises';
 
+import Document from './lib/document.ts';
 import * as loader from './lib/loader.ts';
 import * as url from './lib/url.ts';
-import * as document from './lib/document.ts';
 import * as string from './lib/string.ts';
 import Registry from './lib/registry.ts';
-import { maybe } from './lib/fn.ts';
 
 export type {
   Loader,
-  Draft,
+  LoaderResult,
   Document,
   Template,
   Body,
+  Page,
   Node,
   Tree
 };
 
 export { Registry, loader };
 
-export type Page = {
+export type Draft = {
   title: string;
   description?: string;
   url?: string;
@@ -64,13 +64,14 @@ export default class Spider {
     if (!this.#cache.dirty) return this.#cache.registry;
 
     const depth = string.count('/');
-    const docs = Array.from(this.#cache.documents.values())
+    const pages = Array.from(this.#cache.documents.values())
+      .map(document => document.page)
       .sort((a, b) => {
         if (depth(a.url) === depth(b.url)) return a.url.localeCompare(b.url);
         return depth(a.url) - depth(b.url);
       });
 
-    this.#cache.registry = new Registry(docs);
+    this.#cache.registry = new Registry(pages);
     this.#cache.dirty = false;
 
     return this.#cache.registry;
@@ -103,13 +104,13 @@ export default class Spider {
       const draft = await this.#loaders.get(path.extname(file))?.(file);
       if (!draft) throw new Error(`Unknown file type "${path.extname(file)}"`);
 
-      if (typeof draft.url !== 'string') draft.url = url.create(url.relative(this.#root)(file))(draft);
-      if (!force && this.#cache.documents.has(draft.url)) throw new Error(`Page already exists with url "${draft.url}"`);
+      const document = new Document(url.relative(this.#root)(file), draft);
+      if (!force && this.#cache.documents.has(document.page.url)) throw new Error(`Page already exists with url "${draft.url}"`);
 
-      this.#cache.documents.set(draft.url, draft as Document);
+      this.#cache.documents.set(document.page.url, document);
       this.#cache.dirty = true;
 
-      return draft as Document;
+      return document;
     } catch (cause) {
       throw new Error(`Failed to load page "${file}"`, { cause });
     }
@@ -119,14 +120,14 @@ export default class Spider {
   async write() {
     if (typeof this.#outdir !== 'string') return;
 
-    for (const doc of this.#cache.documents.values()) {
+    for (const document of this.#cache.documents.values()) {
       try {
-        const file = path.join(this.#outdir, document.file(doc.url));
+        const file = path.join(this.#outdir, document.file);
 
         await fsp.mkdir(path.dirname(file), { recursive: true });
-        await fsp.writeFile(file, document.render(this.#registry)(doc));
+        await fsp.writeFile(file, document.render(this.#registry));
       } catch (cause) {
-        throw new Error(`Failed to write document "${doc.url}"`, { cause });
+        throw new Error(`Failed to write document "${document.file}"`, { cause });
       }
     }
   }

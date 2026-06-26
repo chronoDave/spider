@@ -1,15 +1,15 @@
-import type { Document } from './document.ts';
+import type { Page } from './document.ts';
 import type { Tree, Node } from './array.ts';
 
 import * as array from './array.ts';
 
 export default class Registry {
-  readonly #map: Map<string, Node<Document>>;
-  readonly #tree: Tree<Document>;
+  readonly #map: Map<string, Node<Page>>;
+  readonly #tree: Tree<Page>;
 
-  constructor(docs: Document[]) {
-    this.#tree = array.tree(docs)((doc, tree) => {
-      let current = null as Node<Document> | null;
+  constructor(pages: Page[]) {
+    this.#tree = array.tree(pages)((page, tree) => {
+      let current = null as Node<Page> | null;
 
       /**
        * / => []
@@ -17,7 +17,7 @@ export default class Registry {
        * /a/b/ => ['a', 'b']
        * /a/b/c/ => ['a', 'b', 'c']
        */
-      const dirs = doc.url.split('/').filter(Boolean);
+      const dirs = page.url.split('/').filter(Boolean);
 
       /**
        * [] => null
@@ -46,7 +46,7 @@ export default class Registry {
     return this.#tree.nested;
   }
 
-  get(url: string): Node<Document> | null {
+  get(url: string): Node<Page> | null {
     return this.#map.get(url) ?? null;
   }
 }

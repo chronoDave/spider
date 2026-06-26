@@ -36,7 +36,7 @@
     "postversion": "git push && git push --tags"
   },
   "devDependencies": {
-    "@chronocide/eslint-config": "0.8.1",
+    "@chronocide/eslint-config": "0.12.2",
     "@chronocide/spark": "^0.4.1",
     "@types/node": "^25.6.0",
     "dts-bundle-generator": "^9.5.1",
