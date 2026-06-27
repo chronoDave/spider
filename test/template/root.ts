@@ -1,4 +1,4 @@
-import type { Template } from '../../src/spider.js';
+import type { Template } from '../../src/spider.ts';
 
 import h from '@chronocide/spark';
 

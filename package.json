@@ -28,10 +28,10 @@
   },
   "scripts": {
     "lint": "eslint src",
-    "lint:tsc": "tsc --noEmit",
+    "lint:types": "tsc --noEmit",
     "build": "node scripts/build.ts",
     "test": "node --test src/**/*.spec.ts",
-    "preversion": "npm run lint:tsc && npm run lint && npm run test && npm run build",
+    "preversion": "npm run lint:types && npm run lint && npm run test && npm run build",
     "version": "git add -A dist",
     "postversion": "git push && git push --tags"
   },

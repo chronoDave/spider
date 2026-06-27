@@ -1,4 +1,4 @@
-import type { Draft } from '../src/spider.js';
+import type { Draft } from '../src/spider.ts';
 
 const page: Draft = {
   title: 'About',

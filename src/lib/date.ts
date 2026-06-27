@@ -5,6 +5,6 @@ export const truncateDay = (x: Date): Date => {
 
 export const fromString = (x: string) => {
   const date = new Date(x);
-  if (Number.isNaN(date.getTime())) throw new Error('Invalid date');
+  if (Number.isNaN(date.getTime())) throw new Error('Invalid date string');
   return date;
 };

@@ -6,10 +6,10 @@ import path from 'path';
 import fsp from 'fs/promises';
 
 import Document from './lib/document.ts';
-import * as loader from './lib/loader.ts';
-import * as url from './lib/url.ts';
-import * as string from './lib/string.ts';
 import Registry from './lib/registry.ts';
+import { relative } from './lib/url.ts';
+import { count } from './lib/string.ts';
+import * as loader from './lib/loader.ts';
 
 export type {
   Loader,
@@ -57,13 +57,14 @@ export default class Spider {
   readonly #cache: {
     dirty: boolean;
     documents: Map<string, Document>;
+    dependencies: Map<string, Set<string>>;
     registry: Registry;
   };
 
   get #registry(): Registry {
     if (!this.#cache.dirty) return this.#cache.registry;
 
-    const depth = string.count('/');
+    const depth = count('/');
     const pages = Array.from(this.#cache.documents.values())
       .map(document => document.page)
       .sort((a, b) => {
@@ -94,29 +95,36 @@ export default class Spider {
     this.#cache = {
       documents: new Map(),
       registry: new Registry([]),
+      dependencies: new Map(),
       dirty: false
     };
   }
 
-  /** Load file */
+  /**
+   * Load file
+   *
+   * @param file Input file, must default export a `Draft`
+   * @param force If true, overwrites cached entry
+   */
   async load(file: string, force?: boolean): Promise<Document> {
     try {
-      const draft = await this.#loaders.get(path.extname(file))?.(file);
-      if (!draft) throw new Error(`Unknown file type "${path.extname(file)}"`);
+      const result = await this.#loaders.get(path.extname(file))?.(file);
+      if (!result) throw new Error(`Unknown file type "${path.extname(file)}"`);
 
-      const document = new Document(url.relative(this.#root)(file), draft);
-      if (!force && this.#cache.documents.has(document.page.url)) throw new Error(`Page already exists with url "${draft.url}"`);
+      const document = new Document(relative(this.#root)(file), result);
+      if (!force && this.#cache.documents.has(document.page.url)) throw new Error(`Page already exists with url "${document.page.url}"`);
 
       this.#cache.documents.set(document.page.url, document);
+      this.#cache.dependencies.set(file, result.dependencies);
       this.#cache.dirty = true;
 
       return document;
     } catch (cause) {
-      throw new Error(`Failed to load page "${file}"`, { cause });
+      throw new Error(`Failed to load "${file}"`, { cause });
     }
   }
 
-  /** Write documents to `outdir` */
+  /** Write cached documents to `outdir` */
   async write() {
     if (typeof this.#outdir !== 'string') return;
 
@@ -132,6 +140,7 @@ export default class Spider {
     }
   }
 
+  /** Find all files in `entryPoints`, loads and writes to `outdir` */
   async build() {
     try {
       for await (const file of fsp.glob(this.#entryPoints, { exclude: this.#exclude })) await this.load(file);
@@ -143,23 +152,54 @@ export default class Spider {
     }
   }
 
+  /**
+   * Watch `entryPoints` and dependencies. Calls `build` on file changes.
+   *
+   * **Note**: Files that exist outside the working directly do not trigger a build.
+   *
+   * **Note**: Due to Node's [limitations](https://github.com/nodejs/node/issues/49442#issuecomment-1894620232), every file change will
+   * increase memory usage. It is not recommended to run `watch` for extended periods of time.
+   */
   async watch(): Promise<() => void> {
     await this.build();
 
     const ac = new AbortController();
-    const watcher = fsp.watch(this.#root, {
+    const watcher = fsp.watch(process.cwd(), {
       recursive: true,
-      ignore: this.#exclude,
       signal: ac.signal
     });
 
     (async () => {
-      for await (const event of watcher) {
-        if (typeof event.filename !== 'string') continue;
+      try {
+        let last = '';
 
-        const file = path.join(this.#root, event.filename);
-        await this.load(file, true);
-        await this.write();
+        for await (const event of watcher) {
+          if (
+            event.eventType === 'rename' ||
+            typeof event.filename !== 'string' ||
+            last === event.filename
+          ) continue;
+          last = event.filename; // Debounce
+
+          // Check entryPoint file
+          const file = path.join(this.#root, event.filename);
+          if (this.#cache.dependencies.has(file)) {
+            await this.load(file, true);
+            await this.write();
+          }
+
+          // Check dependencies
+          const files = this.#cache.dependencies.entries()
+            .filter(([_, dependencies]) => dependencies.has(path.join(process.cwd(), file)));
+
+          for (const [file] of files) {
+            await this.load(file, true);
+            await this.write();
+          }
+        }
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return;
+        throw err;
       }
     })();
 
