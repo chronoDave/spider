@@ -195,11 +195,11 @@ import path3 from "path";
 import fsp from "fs/promises";
 import { createRequire } from "module";
 import { pathToFileURL } from "url";
-var imports = (root) => (raw) => Array.from(raw.matchAll(/import\s+[^'"]+.(.+)['"]/g)).filter((match) => match[1].startsWith(".")).map((match) => path3.join(path3.dirname(root), match[1]));
+var imports = (root) => (raw) => Array.from(raw.matchAll(/import\s+[^'"]+.([^'"]+)['"].*/g)).filter((match) => match[1].startsWith(".")).map((match) => path3.join(path3.dirname(root), match[1]));
 var bust = async (file) => {
   const raw = await fsp.readFile(file, "utf-8");
   return raw.replaceAll(
-    /(import\s+[^'"]+.)(.+)(['"])/g,
+    /(import\s+[^'"]+.)([^'"]+)(['"].*)/g,
     (_, p1, p2, p3) => {
       const require2 = createRequire(path3.resolve(file));
       const absolute = pathToFileURL(require2.resolve(p2)).href;
