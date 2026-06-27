@@ -196,18 +196,15 @@ import fsp from "fs/promises";
 import { createRequire } from "module";
 import { pathToFileURL } from "url";
 var imports = (root) => (raw) => Array.from(raw.matchAll(/import\s+[^'"]+.([^'"]+)['"].*/g)).filter((match) => match[1].startsWith(".")).map((match) => path3.join(path3.dirname(root), match[1]));
-var bust = async (file) => {
-  const raw = await fsp.readFile(file, "utf-8");
-  return raw.replaceAll(
-    /(import\s+[^'"]+.)([^'"]+)(['"].*)/g,
-    (_, p1, p2, p3) => {
-      const require2 = createRequire(path3.resolve(file));
-      const absolute = pathToFileURL(require2.resolve(p2)).href;
-      if (p2.startsWith(".")) return `${p1}${absolute}?${crypto.randomUUID()}${p3}`;
-      return `${p1}${absolute}${p3}`;
-    }
-  );
-};
+var bust = (root) => (raw) => raw.replaceAll(
+  /(import\s+[^'"]+.)([^'"]+)(['"].*)/g,
+  (_, p1, p2, p3) => {
+    const require2 = createRequire(path3.resolve(root));
+    const absolute = pathToFileURL(require2.resolve(p2)).href;
+    if (p2.startsWith(".")) return `${p1}${absolute}?${crypto.randomUUID()}${p3}`;
+    return `${p1}${absolute}${p3}`;
+  }
+);
 var all = (root) => async (raw) => {
   const stack = imports(root)(raw);
   const cache = new Set(stack);
@@ -227,12 +224,12 @@ var all = (root) => async (raw) => {
 var js = async (file) => {
   const id = crypto.randomUUID();
   const tmp = path4.join(os.tmpdir(), `${id}.ts`);
-  await fsp2.writeFile(tmp, await bust(file));
-  const raw = await import(pathToFileURL2(tmp).href);
+  const raw = await fsp2.readFile(file, "utf-8");
+  await fsp2.writeFile(tmp, bust(file)(raw));
+  const draft = await import(pathToFileURL2(tmp).href).then((result) => object("default")(result.default));
   await fsp2.rm(tmp);
-  const draft = object("default")(raw.default);
   return {
-    dependencies: await all(path4.resolve(file))(await fsp2.readFile(file, "utf-8")),
+    dependencies: await all(path4.resolve(file))(raw),
     page: {
       title: string("title")(draft.title),
       description: maybe(string("description"))(draft.description),
@@ -369,15 +366,10 @@ var Spider = class {
         for await (const event of watcher) {
           if (event.eventType === "rename" || typeof event.filename !== "string") continue;
           const file = event.filename;
-          if (this.#cache.dependencies.has(file) || this.#entryPoints.some((glob) => path5.matchesGlob(file, glob)) && this.#exclude.every((glob) => !path5.matchesGlob(file, glob))) {
-            await this.load(file, true);
-            await this.write();
-          }
+          if (this.#cache.dependencies.has(file) || this.#entryPoints.some((glob) => path5.matchesGlob(file, glob)) && this.#exclude.every((glob) => !path5.matchesGlob(file, glob))) await this.load(file, true);
           const files = this.#cache.dependencies.entries().filter(([_, dependencies]) => dependencies.has(path5.join(process.cwd(), file)));
-          for (const [file2] of files) {
-            await this.load(file2, true);
-            await this.write();
-          }
+          for (const [file2] of files) await this.load(file2, true);
+          await this.write();
         }
       } catch (err2) {
         if (err2 instanceof Error && err2.name === "AbortError") return;
