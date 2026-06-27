@@ -157,8 +157,12 @@ export default class Spider {
    *
    * **Note**: Files that exist outside the working directly do not trigger a build.
    *
+   * **Note**: Some systems may send duplicate events.
+   *
    * **Note**: Due to Node's [limitations](https://github.com/nodejs/node/issues/49442#issuecomment-1894620232), every file change will
    * increase memory usage. It is not recommended to run `watch` for extended periods of time.
+   *
+   * @see https://nodejs.org/api/fs.html#caveats
    */
   async watch(): Promise<() => void> {
     await this.build();
@@ -172,19 +176,18 @@ export default class Spider {
 
     (async () => {
       try {
-        let last = '';
-
         for await (const event of watcher) {
-          if (
-            event.eventType === 'rename' ||
-            typeof event.filename !== 'string' ||
-            last === event.filename
-          ) continue;
+          if (event.eventType === 'rename' || typeof event.filename !== 'string') continue;
 
           const file = event.filename;
-          last = file; // Debounce
 
-          if (this.#cache.dependencies.has(file)) {
+          if (
+            this.#cache.dependencies.has(file) ||
+            (
+              this.#entryPoints.some(glob => path.matchesGlob(file, glob)) &&
+              this.#exclude.every(glob => !path.matchesGlob(file, glob))
+            )
+          ) {
             await this.load(file, true);
             await this.write();
           }
