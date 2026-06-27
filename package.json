@@ -1,6 +1,6 @@
 {
   "name": "@chronocide/spider",
-  "version": "10.0.0",
+  "version": "10.1.0",
   "description": "Tiny static site generator",
   "author": "Chronocide",
   "license": "GPL-3.0",

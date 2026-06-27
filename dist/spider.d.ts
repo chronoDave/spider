@@ -56,18 +56,21 @@ export declare class Document {
 	 * - `/about` + `about.xml` => `/about/about.xml`
 	 */
 	static url(file: string, result: LoaderResult): string;
-	constructor(root: string, result: LoaderResult);
+	constructor(dir: string, result: LoaderResult);
 	render(registry: Registry): string;
 }
 export type LoaderResult = {
-	title: string;
-	description: string | null;
-	url: string | null;
-	ext: string | null;
-	created: Date | null;
-	updated: Date | null;
-	template: Template | null;
-	body: Body;
+	dependencies: Set<string>;
+	page: {
+		title: string;
+		description: string | null;
+		url: string | null;
+		ext: string | null;
+		created: Date | null;
+		updated: Date | null;
+		template: Template | null;
+		body: Body;
+	};
 };
 export type Loader = (file: string) => Promise<LoaderResult>;
 declare const js: Loader;
@@ -97,11 +100,25 @@ export type SpiderOptions = {
 declare class Spider {
 	#private;
 	constructor(options: SpiderOptions);
-	/** Load file */
+	/**
+	 * Load file
+	 *
+	 * @param file Input file, must default export a `Draft`
+	 * @param force If true, overwrites cached entry
+	 */
 	load(file: string, force?: boolean): Promise<Document>;
-	/** Write documents to `outdir` */
+	/** Write cached documents to `outdir` */
 	write(): Promise<void>;
+	/** Find all files in `entryPoints`, loads and writes to `outdir` */
 	build(): Promise<Map<string, Document>>;
+	/**
+	 * Watch `entryPoints` and dependencies. Calls `build` on file changes.
+	 *
+	 * **Note**: Files that exist outside the working directly do not trigger a build.
+	 *
+	 * **Note**: Due to Node's [limitations](https://github.com/nodejs/node/issues/49442#issuecomment-1894620232), every file change will
+	 * increase memory usage. It is not recommended to run `watch` for extended periods of time.
+	 */
 	watch(): Promise<() => void>;
 }
 
