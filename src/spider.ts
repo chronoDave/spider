@@ -164,7 +164,7 @@ export default class Spider {
    *
    * @see https://nodejs.org/api/fs.html#caveats
    */
-  async watch(): Promise<() => void> {
+  async watch() {
     await this.build();
 
     const ac = new AbortController();
@@ -174,7 +174,7 @@ export default class Spider {
       signal: ac.signal
     });
 
-    (async () => {
+    const task = (async () => {
       try {
         for await (const event of watcher) {
           if (event.eventType === 'rename' || typeof event.filename !== 'string') continue;
@@ -207,6 +207,9 @@ export default class Spider {
       }
     })();
 
-    return () => ac.abort();
+    return async () => {
+      ac.abort();
+      await task;
+    };
   }
 }

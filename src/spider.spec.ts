@@ -89,7 +89,7 @@ test('[Spider.load]', async t => {
     await fsp.writeFile('test/template/root.ts', original);
   });
 
-  cancel();
+  await cancel();
 
   await fsp.rm('build', { recursive: true, force: true });
 });
