@@ -1,10 +1,11 @@
 import test from 'node:test';
 import { fileURLToPath } from 'url';
+import path from 'path';
 
-import modules, { imports } from './modules.ts';
+import * as modules from './modules.ts';
 
-test('[module.imports]', t => {
-  t.assert.equal(imports(fileURLToPath(import.meta.url))([
+test('[modules.imports]', t => {
+  t.assert.equal(modules.imports(fileURLToPath(import.meta.url))([
     'import type { Body, Template } from \'./document.ts\';',
     '',
     'import fsp from \'fs/promises\';',
@@ -18,8 +19,8 @@ test('[module.imports]', t => {
   ].join('\n')).length, 4, 'imports');
 });
 
-test('[module]', async t => {
-  const imports = await modules(fileURLToPath(import.meta.url))([
+test('[modules.all]', async t => {
+  const imports = await modules.all(fileURLToPath(import.meta.url))([
     'import type { Body, Template } from \'./document.ts\';',
     '',
     'import fsp from \'fs/promises\';',
@@ -33,4 +34,9 @@ test('[module]', async t => {
   ].join('\n'));
 
   t.assert.equal(imports.size, 7, 'imports (recursive)');
+});
+
+test('[modules.bust]', async t => {
+  await t.assert.doesNotReject(modules.bust('./src/lib/loader.ts'), 'relative');
+  await t.assert.doesNotReject(modules.bust(path.resolve('./src/lib/loader.ts')), 'absolute');
 });

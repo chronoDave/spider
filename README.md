@@ -22,23 +22,167 @@
   - By default, loads `.ts`, `.js` and `.md` files
 - Flexible API, every page has full access to the whole website allowing for the creation of RSS feeds, collection pages, etc.
 - Sensible defaults
-  - Markdown file URL's are generated based on folder structure and blog post title (`/<folder>/<title>`)
+  - File URL's are generated based on folder structure and title (`/<folder>/<title>`)
   - Creation and update dates are truncated to days
   - Output files are HTML
 
-## Installation
+## Getting Started
+
+### Installation
 
 ```sh
-npm i @chronocide/spider
+npm i @chronocide/spider -D
 ```
 
-### Usage
+### Example
 
-#### URL / path resolution
+A quick example of how `spider` can be used to create a website.
+
+**src/about.ts**
+
+```ts
+import type { Draft } from '@chronocide/spider';
+
+const page: Draft = {
+  title: 'About',
+  body: () => 'This is my page'
+};
+
+export default page;
+```
+
+**build.ts**
+
+```ts
+import Spider from '@chronocide/spark';
+
+const spider = new Spider({
+  entryPoints: ['src/**/*.ts']
+  root: 'src',
+  outdir: 'build',
+});
+
+spider.build();
+```
+
+Running the build script creates `build/about/index.html`:
+
+```sh
+node scripts/build.ts
+```
+
+## API
+
+### Registry
+
+The registry contains a list (flat and tree) of page nodes. A node contains a page and references to its children. This allows for easy generation of RSS feeds, breadcrumbs and other patterns that require site structure information.
+
+Some examples:
+
+```ts
+import type { Draft } from '@chronocide/spider';
+
+const page: Draft = {
+  title: 'blogs',
+  body: registry => `<ul>${registry.get('/blogs/')?.children.map(child => {
+    const { url, title } = child.value;
+
+    return `<li><a href="${url}">${title}</a></li>`;
+  })}</ul>`
+};
+
+export default page;
+```
+
+```ts
+import type { Draft, Node, Document } from '@chronocide/spider';
+
+const page: Draft = {
+  title: 'breadcrumbs',
+  body: registry => {
+    const breadcrumbs: Node<Document>[];
+    let current = registry.get('/a/b/c/');
+
+    while (current) {
+      breadcrumbs.push(current);
+      current = current.parent;
+    }
+
+    return `<nav aria-description="Breadcrumbs">
+      <ol>
+        ${breadcrumbs.reverse().map((node, i) => `<li>
+          <a href=${node.value.url} ${i === breadcrumbs.length - 1 ? 'aria-current="page"' : ''}>${node.value.title}</a>
+        </li>`)}
+      </ol>
+    </nav>`;
+  }
+};
+
+export default page;
+```
+
+```TS
+import type { Draft, Node, Document } from '@chronocide/spider';
+
+const page: Draft = {
+  title: 'sitemap',
+  body: registry => {
+    const render = (node: Node<Document>) => `<li>
+      <a href="${node.value.url}">${node.value.title}</a>
+      <ul>${node.children.map(render).join('')}</ul>
+    </li>`;
+
+    return `<ul>${render(registry.get('/')).join('')}</ul>`
+  }
+};
+
+export default page;
+```
+
+### Loader
+
+Loaders are used to load different file types. By default, `spider` supports loading `.js`, `.ts` and `.md` files. Loaders can be created or overwritten. An example loader for `.txt` files:
+
+```ts
+import type { Loader } from '@chronocide/spider';
+
+import fsp from 'fs/promises';
+import path from 'path';
+import Spider from '@chronocide/spider';
+
+const loader: Loader = async file => {
+  const raw = await fsp.readFile(file, 'utf-8');
+  const { name } = path.parse(file);
+
+  return {
+    title: name,
+    description: null,
+    url: null,
+    ext: null,
+    created: null,
+    updated: null,
+    template: null,
+    body: () => raw
+  }
+};
+
+const spider = new Spider({
+  entryPoints: ['src/**/*.txt'],
+  root: 'src',
+  outdir: 'build',
+  loader: {
+    '.txt': loader
+  }
+});
+
+spider.build();
+```
+
+### URL / path resolution
 
 File paths and url's are automatically generated, but can be overwritten manually. `spider` uses the following rules:
 
-##### Path
+#### Path
 
 - `/` + `index` => `/index.html`
 - `/` + `about` => `/about/index.html`
@@ -50,7 +194,7 @@ File paths and url's are automatically generated, but can be overwritten manuall
 - `/about` + `about.html` => `/about/about.html`
 - `/about` + `about.xml` => `/about/about.xml`
 
-##### URL
+#### URL
 
 - `/` + `index` => `/`
 - `/` + `about` => `/about/`
@@ -61,116 +205,3 @@ File paths and url's are automatically generated, but can be overwritten manuall
 - `/about` + `about` => `/about/`
 - `/about` + `about.html` => `/about/about`
 - `/about` + `about.xml` => `/about/about.xml`
-
-#### `spider`
-
-Builds static site
-
-```ts
-import Spider from '@chronocide/spark';
-
-const spider = new Spider({
-  entryPoints: ['src/**/*.ts', 'src/**/*.md']
-  exclude: ['**/*.spec.ts'],
-  root: 'src',
-  outdir: 'build',
-});
-
-spider.build();
-```
-
-```ts
-import type { Template, Draft } from '@chronocide/spider';
-
-import h from '@chronocide/spark';
-
-const template: Template = registry =>
-  document => {
-    const template = h('html')({ lang: 'en-GB' })(
-      h('head')()(h('title')()()),
-      h('body')()(document.body(registry))
-    );
-
-    return `<!DOCTYPE html>${template}`;
-  };
-
-const page: Draft = {
-  title: 'Home',
-  url: '/',
-  template,
-  body: registry => h('main')()(
-    h('p')()('This is a page'),
-    h('a')({ href: registry.node('/about/')?.value.url })(registry.node('/about')?.value.title)
-  )
-};
-
-export default page;
-```
-
-##### `SpiderOptions`
-
-```ts
-export type LoaderResult = {
-  title: string;
-  description: string | null;
-  url: string | null;
-  ext: string | null;
-  created: Date | null;
-  updated: Date | null;
-  template: Template | null;
-  body: Body;
-};
-```
-
-```ts
-export type Loader = (file: string) => Promise<LoaderResult>;
-```
-
-```ts
-export type SpiderOptions = {
-  /** Supports [Node globs](https://github.com/isaacs/minimatch#features) */
-  entryPoints: string[];
-  /** Supports [Node globs](https://github.com/isaacs/minimatch#features) */
-  exclude?: string[];
-  /** Output directory */
-  outdir?: string;
-  /** Base directory */
-  root?: string;
-  /** File loaders */
-  loader?: Record<string, Loader>;
-}
-```
-
-#### `Loaders`
-
-Loaders are used to load different file types. By default, `spider` supports loading `.js`, `.ts` and `.md` files. Loaders can be created or overwritten.
-
-```ts
-import type { Loader } from '@chronocide/spider';
-
-import Spider from '@chronocide/spider';
-
-const loader: Loader = async context => ({
-  title: 'loader',
-  description: null,
-  url: '/',
-  ext: '.html',
-  created: new Date(),
-  updated: null,
-  template: registry => document => document.body(registry),
-  body: registry => `<a href="${registry.get('/')?.value.title}">Home</a>`
-});
-
-const spider = new Spider({
-  entryPoints: ['src/**/*.ts', 'src/**/*.md'],
-  exclude: ['**/*.spec.ts'],
-  root: 'src',
-  outdir: 'build',
-  loader: {
-    '.md': loader,
-    '.ts': loader
-  }
-});
-
-spider.build();
-```

@@ -2,11 +2,13 @@ import type { Body, Template } from './document.ts';
 
 import fsp from 'fs/promises';
 import path from 'path';
+import os from 'os';
+import { pathToFileURL } from 'url';
 
 import * as date from './date.ts';
 import * as parse from './parse.ts';
 import { maybe } from './fn.ts';
-import modules from './modules.ts';
+import * as modules from './modules.ts';
 
 export type LoaderResult = {
   dependencies: Set<string>;
@@ -25,24 +27,17 @@ export type LoaderResult = {
 export type Loader = (file: string) => Promise<LoaderResult>;
 
 export const js: Loader = async file => {
-  /**
-   * TODO, nested imports don't get their cache busted,
-   * meaning this fails when dependencies get updated.
-   *
-   * Solution is to spawn single-use worker threads, so
-   * there's no cache at all.
-   */
+  const id = crypto.randomUUID();
+  const tmp = path.join(os.tmpdir(), `${id}.ts`);
+  await fsp.writeFile(tmp, await modules.bust(file));
 
-  /**
-   * Force cache-busting as Node caches ESM imports by default.
-   *
-   * @see https://github.com/nodejs/node/issues/49442#issuecomment-1894620232
-   */
-  const raw = await import(`file://${path.resolve(file)}`) as Record<string, unknown>;
+  const raw = await import(pathToFileURL(tmp).href) as Record<string, unknown>;
+  await fsp.rm(tmp);
+
   const draft = parse.object('default')(raw.default);
 
   return {
-    dependencies: await modules(path.resolve(file))(await fsp.readFile(file, 'utf-8')),
+    dependencies: await modules.all(path.resolve(file))(await fsp.readFile(file, 'utf-8')),
     page: {
       title: parse.string('title')(draft.title),
       description: maybe(parse.string('description'))(draft.description),

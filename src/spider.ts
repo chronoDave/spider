@@ -153,15 +153,18 @@ export default class Spider {
   }
 
   /**
-   * Watch `entryPoints` and build on change
+   * Watch `entryPoints` and dependencies. Calls `build` on file changes.
    *
-   * **Note**: dependencies that exist outside of `root` do not trigger a build
+   * **Note**: Files that exist outside the working directly do not trigger a build.
+   *
+   * **Note**: Due to Node's [limitations](https://github.com/nodejs/node/issues/49442#issuecomment-1894620232), every file change will
+   * increase memory usage. It is not recommended to run `watch` for extended periods of time.
    */
   async watch(): Promise<() => void> {
     await this.build();
 
     const ac = new AbortController();
-    const watcher = fsp.watch(this.#root, {
+    const watcher = fsp.watch(process.cwd(), {
       recursive: true,
       signal: ac.signal
     });
