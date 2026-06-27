@@ -95,12 +95,12 @@ export default page;
 ```
 
 ```ts
-import type { Draft, Node, Document } from '@chronocide/spider';
+import type { Draft, Node, Page } from '@chronocide/spider';
 
 const page: Draft = {
   title: 'breadcrumbs',
   body: registry => {
-    const breadcrumbs: Node<Document>[];
+    const breadcrumbs: Node<Page>[];
     let current = registry.get('/a/b/c/');
 
     while (current) {
@@ -122,12 +122,12 @@ export default page;
 ```
 
 ```TS
-import type { Draft, Node, Document } from '@chronocide/spider';
+import type { Draft, Node, Page } from '@chronocide/spider';
 
 const page: Draft = {
   title: 'sitemap',
   body: registry => {
-    const render = (node: Node<Document>) => `<li>
+    const render = (node: Node<Page>) => `<li>
       <a href="${node.value.url}">${node.value.title}</a>
       <ul>${node.children.map(render).join('')}</ul>
     </li>`;
