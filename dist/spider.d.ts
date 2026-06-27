@@ -116,10 +116,14 @@ declare class Spider {
 	 *
 	 * **Note**: Files that exist outside the working directly do not trigger a build.
 	 *
+	 * **Note**: Some systems may send duplicate events.
+	 *
 	 * **Note**: Due to Node's [limitations](https://github.com/nodejs/node/issues/49442#issuecomment-1894620232), every file change will
 	 * increase memory usage. It is not recommended to run `watch` for extended periods of time.
+	 *
+	 * @see https://nodejs.org/api/fs.html#caveats
 	 */
-	watch(): Promise<() => void>;
+	watch(): Promise<() => Promise<void>>;
 }
 
 declare namespace loader {
