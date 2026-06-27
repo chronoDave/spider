@@ -33,20 +33,17 @@ export const imports = (root: string) =>
  * using indirection. The source file is copied to a temporary directory,
  * rewritten and returned. This allows imports to be cache broken.
  */
-export const bust = async (file: string) => {
-  const raw = await fsp.readFile(file, 'utf-8');
-
-  return raw.replaceAll(
+export const bust = (root: string) =>
+  (raw: string) => raw.replaceAll(
     /(import\s+[^'"]+.)([^'"]+)(['"].*)/g,
     (_, p1, p2, p3) => {
-      const require = createRequire(path.resolve(file));
+      const require = createRequire(path.resolve(root));
       const absolute = pathToFileURL(require.resolve(p2)).href;
 
       if (p2.startsWith('.')) return `${p1}${absolute}?${crypto.randomUUID()}${p3}`;
       return `${p1}${absolute}${p3}`; // Do not cache node_modules
     }
   );
-};
 
 export const all = (root: string) =>
   async (raw: string) => {

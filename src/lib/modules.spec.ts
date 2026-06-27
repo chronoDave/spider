@@ -1,6 +1,9 @@
+import type { TestContext } from 'node:test';
+
 import test from 'node:test';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import fsp from 'fs/promises';
 
 import * as modules from './modules.ts';
 
@@ -36,7 +39,16 @@ test('[modules.all]', async t => {
   t.assert.equal(imports.size, 7, 'imports (recursive)');
 });
 
-test('[modules.bust]', async t => {
-  await t.assert.doesNotReject(modules.bust('./src/lib/loader.ts'), 'relative');
-  await t.assert.doesNotReject(modules.bust(path.resolve('./src/lib/loader.ts')), 'absolute');
+test('[modules.bust]', async (t: TestContext) => {
+  const file = './src/lib/loader.ts';
+  const raw = await fsp.readFile(file, 'utf-8');
+
+  t.assert.doesNotThrow(() => modules.bust(file)(raw), 'relative');
+  t.assert.doesNotThrow(() => modules.bust(path.resolve(file))(raw), 'absolute');
+
+  const busted = Array.from(modules.bust(file)(raw).matchAll(/import\s+[^'"]+.([^'"]+)['"].*/g))
+    .map(match => match[1])
+    .filter(match => match.includes('/src/'));
+
+  t.assert.ok(busted.every(match => match.includes('.ts?')), 'busts cache');
 });

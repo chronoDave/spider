@@ -187,19 +187,14 @@ export default class Spider {
               this.#entryPoints.some(glob => path.matchesGlob(file, glob)) &&
               this.#exclude.every(glob => !path.matchesGlob(file, glob))
             )
-          ) {
-            await this.load(file, true);
-            await this.write();
-          }
+          ) await this.load(file, true);
 
           // Check dependencies
           const files = this.#cache.dependencies.entries()
             .filter(([_, dependencies]) => dependencies.has(path.join(process.cwd(), file)));
 
-          for (const [file] of files) {
-            await this.load(file, true);
-            await this.write();
-          }
+          for (const [file] of files) await this.load(file, true);
+          await this.write();
         }
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') return;

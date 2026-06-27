@@ -29,15 +29,14 @@ export type Loader = (file: string) => Promise<LoaderResult>;
 export const js: Loader = async file => {
   const id = crypto.randomUUID();
   const tmp = path.join(os.tmpdir(), `${id}.ts`);
-  await fsp.writeFile(tmp, await modules.bust(file));
+  const raw = await fsp.readFile(file, 'utf-8');
 
-  const raw = await import(pathToFileURL(tmp).href) as Record<string, unknown>;
+  await fsp.writeFile(tmp, modules.bust(file)(raw));
+  const draft = await import(pathToFileURL(tmp).href).then(result => parse.object('default')(result.default));
   await fsp.rm(tmp);
 
-  const draft = parse.object('default')(raw.default);
-
   return {
-    dependencies: await modules.all(path.resolve(file))(await fsp.readFile(file, 'utf-8')),
+    dependencies: await modules.all(path.resolve(file))(raw),
     page: {
       title: parse.string('title')(draft.title),
       description: maybe(parse.string('description'))(draft.description),
