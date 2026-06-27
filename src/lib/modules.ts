@@ -5,7 +5,7 @@ import { pathToFileURL } from 'url';
 
 /** Find all static ESM imports */
 export const imports = (root: string) =>
-  (raw: string): string[] => Array.from(raw.matchAll(/import\s+[^'"]+.(.+)['"]/g))
+  (raw: string): string[] => Array.from(raw.matchAll(/import\s+[^'"]+.([^'"]+)['"].*/g))
     .filter(match => match[1].startsWith('.'))
     .map(match => path.join(path.dirname(root), match[1]));
 
@@ -37,7 +37,7 @@ export const bust = async (file: string) => {
   const raw = await fsp.readFile(file, 'utf-8');
 
   return raw.replaceAll(
-    /(import\s+[^'"]+.)(.+)(['"])/g,
+    /(import\s+[^'"]+.)([^'"]+)(['"].*)/g,
     (_, p1, p2, p3) => {
       const require = createRequire(path.resolve(file));
       const absolute = pathToFileURL(require.resolve(p2)).href;
