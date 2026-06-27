@@ -166,6 +166,7 @@ export default class Spider {
     const ac = new AbortController();
     const watcher = fsp.watch(process.cwd(), {
       recursive: true,
+      ignore: this.#outdir ? [this.#outdir, `${this.#outdir}/**/*`] : undefined,
       signal: ac.signal
     });
 
@@ -179,10 +180,10 @@ export default class Spider {
             typeof event.filename !== 'string' ||
             last === event.filename
           ) continue;
-          last = event.filename; // Debounce
 
-          // Check entryPoint file
-          const file = path.join(this.#root, event.filename);
+          const file = event.filename;
+          last = file; // Debounce
+
           if (this.#cache.dependencies.has(file)) {
             await this.load(file, true);
             await this.write();
