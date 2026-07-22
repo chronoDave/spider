@@ -44,6 +44,12 @@ test('[Document.file]', t => {
       '/about.xml',
       'ext (xml)'
     );
+
+    t.assert.equal(
+      Document.file('/', result({ url: '/abc', title: 'def' })),
+      '/abc.html',
+      'url'
+    );
   });
 
   t.test('dir', () => {
@@ -76,6 +82,12 @@ test('[Document.file]', t => {
       '/about/about.xml',
       'ext (xml)'
     );
+
+    t.assert.equal(
+      Document.file('/about', result({ url: '/abc', title: 'def' })),
+      '/abc.html',
+      'url'
+    );
   });
 });
 
@@ -103,6 +115,24 @@ test('[Document.url]', t => {
       new Document('/', result({ title: 'about', ext: '.xml' })).page.url,
       '/about.xml',
       'ext (xml)'
+    );
+
+    t.assert.equal(
+      new Document('/', result({ url: '/abc', title: 'def' })).page.url,
+      '/abc',
+      'url'
+    );
+
+    t.assert.equal(
+      new Document('/', result({ url: '/abc.html', title: 'def' })).page.url,
+      '/abc',
+      'url (html)'
+    );
+
+    t.assert.equal(
+      new Document('/', result({ url: '/abc.xml', title: 'def' })).page.url,
+      '/abc.xml',
+      'url (xml)'
     );
   });
 
@@ -135,6 +165,24 @@ test('[Document.url]', t => {
       new Document('/about', result({ title: 'about', ext: '.xml' })).page.url,
       '/about/about.xml',
       'ext (xml)'
+    );
+
+    t.assert.equal(
+      new Document('/about', result({ url: '/abc', title: 'def' })).page.url,
+      '/abc',
+      'url'
+    );
+
+    t.assert.equal(
+      new Document('/about', result({ url: '/abc.html', title: 'def' })).page.url,
+      '/abc',
+      'url (html)'
+    );
+
+    t.assert.equal(
+      new Document('/about', result({ url: '/abc.xml', title: 'def' })).page.url,
+      '/abc.xml',
+      'url (xml)'
     );
   });
 });

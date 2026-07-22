@@ -3,8 +3,7 @@ import type { LoaderResult } from './loader.ts';
 
 import path from 'path/posix';
 
-import { maybe } from './fn.ts';
-import { slugify } from './string.ts';
+import * as string from './string.ts';
 
 export type Template = (registry: Registry) => (page: Page) => string;
 
@@ -38,16 +37,33 @@ export default class Document {
    * - `/about` + `about.html` => `/about/about.html`
    * - `/about` + `about.xml` => `/about/about.xml`
    */
-  static file(dir: string, result: LoaderResult) {
-    const ext = result.page.ext ?? (maybe(path.parse)(result.page.url)?.ext || null);
-    const name = maybe(path.parse)(result.page.url)?.name ?? slugify(result.page.title);
+  static file(root: string, result: LoaderResult) {
+    if (typeof result.page.url === 'string') {
+      const { dir, name, ext } = path.parse(result.page.url);
+
+      return path.normalize(path.format({
+        dir,
+        name: string.maybe(name) ?? 'index',
+        ext: string.maybe(ext) ?? 'html'
+      }));
+    }
+
+    const ext = result.page.ext ?? '.html';
+    const name = string.slugify(result.page.title);
+
+    let dir = path.join(root, name);
+    if (
+      typeof result.page.ext === 'string' ||
+      name === 'index' || // Prevent index/index
+      root.endsWith(name) // Prevent dir/dir/index
+    ) dir = root;
 
     return path.normalize(path.format({
-      dir: ext || name === 'index' || dir.endsWith(name) ?
-        dir :
-        path.join(dir, name),
-      name: ext ? name : 'index',
-      ext: ext ?? '.html'
+      dir,
+      name: typeof result.page.ext === 'string' ?
+        name :
+        'index',
+      ext
     }));
   }
 
@@ -65,12 +81,15 @@ export default class Document {
    * - `/about` + `about.xml` => `/about/about.xml`
    */
   static url(file: string, result: LoaderResult) {
-    let url = result.page.url ?? file;
+    if (typeof result.page.url === 'string') {
+      if (result.page.url.endsWith('.html')) return result.page.url.replace(/\.html$/, '');
+      return result.page.url;
+    }
 
     const { ext, dir, name } = path.parse(file);
-    if (ext === '.html') url = path.join(dir, name === 'index' ? '/' : name);
+    if (ext === '.html') return path.join(dir, name === 'index' ? '/' : name);
 
-    return url;
+    return file;
   }
 
   constructor(dir: string, result: LoaderResult) {

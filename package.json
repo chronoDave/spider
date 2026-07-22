@@ -27,16 +27,15 @@
     "node": ">=24.13.0"
   },
   "scripts": {
-    "lint": "eslint src",
-    "lint:types": "tsc --noEmit",
+    "lint": "tsc --noEmit && eslint src",
     "build": "node scripts/build.ts",
     "test": "node --test src/**/*.spec.ts",
-    "preversion": "npm run lint:types && npm run lint && npm run test && npm run build",
+    "preversion": "npm run lint && npm run test && npm run build",
     "version": "git add -A dist",
     "postversion": "git push && git push --tags"
   },
   "devDependencies": {
-    "@chronocide/eslint-config": "0.12.2",
+    "@chronocide/eslint-config": "0.13.1",
     "@chronocide/spark": "^0.4.1",
     "@types/node": "^25.6.0",
     "dts-bundle-generator": "^9.5.1",

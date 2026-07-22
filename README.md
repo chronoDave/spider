@@ -14,6 +14,16 @@
 
 `spider` is a tiny static site generator (SSR) meant for small websites. It uses a modular plugin system for maximum flexibility.
 
+- [Features](#features)
+- [Getting Started](#getting-started)
+  - [Installation](#installation)
+  - [Example](#example)
+- [API](#api)
+  - [Registry](#registry)
+  - [Loader](#loader)
+  - [URL](#url)
+  - [Path](#path)
+
 ## Features
 
 - No dependencies
@@ -178,30 +188,34 @@ const spider = new Spider({
 spider.build();
 ```
 
-### URL / path resolution
+### URL
 
-File paths and url's are automatically generated, but can be overwritten manually. `spider` uses the following rules:
+If `url` is not set, `spider` will generate the URL based on directory (relative to root), name and extension
 
-#### Path
+| `dir` | `name` | `ext` | `output` |
+| - | - | - | - |
+| `/` | `index` | - | `/` |
+| `/` | `about` | - | `/about` |
+| `/` | `about` | `.html` | `/about` |
+| `/` | `about` | `.xml` | `/about.xml` |
+| `/about` | `index` | - | `/about/` |
+| `/about` | `me` | - | `/about/me/` |
+| `/about` | `about` | - | `/about/` |
+| `/about` | `about` | `.html` | `/about/about` |
+| `/about` | `about` | `.xml` | `/about/about.xml` |
 
-- `/` + `index` => `/index.html`
-- `/` + `about` => `/about/index.html`
-- `/` + `about.html` => `/about.html`
-- `/` + `about.xml` => `/about.xml`
-- `/about` + `index` => `/about/index.html`
-- `/about` + `me` => `/about/me/index.html`
-- `/about` + `about` => `/about/index.html`
-- `/about` + `about.html` => `/about/about.html`
-- `/about` + `about.xml` => `/about/about.xml`
+### Path
 
-#### URL
+If `url` is not set, `spider` will generate the path based on directory (relative to root), name and extension.
 
-- `/` + `index` => `/`
-- `/` + `about` => `/about/`
-- `/` + `about.html` => `/about`
-- `/` + `about.xml` => `/about.xml`
-- `/about` + `index` => `/about/`
-- `/about` + `me` => `/about/me/`
-- `/about` + `about` => `/about/`
-- `/about` + `about.html` => `/about/about`
-- `/about` + `about.xml` => `/about/about.xml`
+| `dir` | `name` | `ext` | `output` |
+| - | - | - | - |
+| `/` | `index` | - | `/index.html` |
+| `/` | `about` | - | `/about/index.html` |
+| `/` | `about` | `.html` | `/about.html` |
+| `/` | `about` | `.xml` | `/about.xml` |
+| `/about` | `index` | - | `/about/index.html` |
+| `/about` | `me` | - | `/about/me/index.html` |
+| `/about` | `about` | - | `/about/index.html` |
+| `/about` | `about` | `.html` | `/about/about.html` |
+| `/about` | `about` | `.xml` | `/about/about.xml` |

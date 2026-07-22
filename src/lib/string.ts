@@ -16,3 +16,9 @@ export const count = (c: string) =>
 
     return n;
   };
+
+/** If empty, return null */
+export const maybe = (x: string): string | null => {
+  if (x === '') return null;
+  return x;
+};
