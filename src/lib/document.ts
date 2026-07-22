@@ -41,6 +41,14 @@ export default class Document {
     if (typeof result.page.url === 'string') {
       const { dir, name, ext } = path.parse(result.page.url);
 
+      if (result.page.url.endsWith('/')) {
+        return path.normalize(path.format({
+          dir: path.join(dir, name),
+          name: 'index',
+          ext: 'html'
+        }));
+      }
+
       return path.normalize(path.format({
         dir,
         name: string.maybe(name) ?? 'index',

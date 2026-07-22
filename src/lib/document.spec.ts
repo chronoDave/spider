@@ -50,6 +50,12 @@ test('[Document.file]', t => {
       '/abc.html',
       'url'
     );
+
+    t.assert.equal(
+      Document.file('/', result({ url: '/abc/', title: 'def' })),
+      '/abc/index.html',
+      'url (dir)'
+    );
   });
 
   t.test('dir', () => {
@@ -87,6 +93,12 @@ test('[Document.file]', t => {
       Document.file('/about', result({ url: '/abc', title: 'def' })),
       '/abc.html',
       'url'
+    );
+
+    t.assert.equal(
+      Document.file('/about', result({ url: '/abc/', title: 'def' })),
+      '/abc/index.html',
+      'url (dir)'
     );
   });
 });
