@@ -37,7 +37,7 @@ test('[Spider.build]', async (t: TestContext) => {
   t.assert.ok(fs.existsSync('build/about.html'), 'url (html)');
   t.assert.ok(fs.existsSync('build/about.xml'), 'url (xml)');
 
-  t.assert.ok(fs.readFileSync('build/index.html', 'utf-8').includes('About'));
+  t.assert.ok(fs.readFileSync('build/index.html', 'utf-8').includes('About'), 'builds html');
 
   await fsp.rm('build', { recursive: true, force: true });
 });
