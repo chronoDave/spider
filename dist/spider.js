@@ -46,6 +46,13 @@ var Document = class _Document {
   static file(root, result) {
     if (typeof result.page.url === "string") {
       const { dir: dir2, name: name2, ext: ext2 } = path.parse(result.page.url);
+      if (result.page.url.endsWith("/")) {
+        return path.normalize(path.format({
+          dir: path.join(dir2, name2),
+          name: "index",
+          ext: "html"
+        }));
+      }
       return path.normalize(path.format({
         dir: dir2,
         name: maybe(name2) ?? "index",
