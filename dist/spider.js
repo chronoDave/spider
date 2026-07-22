@@ -11,12 +11,6 @@ import fsp3 from "fs/promises";
 // src/lib/document.ts
 import path from "path/posix";
 
-// src/lib/fn.ts
-var maybe = (fn2) => (x) => {
-  if (x === null || x === void 0) return null;
-  return fn2(x);
-};
-
 // src/lib/string.ts
 var slugify = (x) => x.trim().replace(/\s+/g, "-").normalize("NFD").replace(/(\p{Diacritic})|[^A-Za-z0-9-]/gu, "").replace(/-+/g, "-").toLocaleLowerCase();
 var count = (c) => (x) => {
@@ -25,6 +19,10 @@ var count = (c) => (x) => {
     if (x.slice(i, i + c.length) === c) n += 1;
   }
   return n;
+};
+var maybe = (x) => {
+  if (x === "") return null;
+  return x;
 };
 
 // src/lib/document.ts
@@ -45,13 +43,24 @@ var Document = class _Document {
    * - `/about` + `about.html` => `/about/about.html`
    * - `/about` + `about.xml` => `/about/about.xml`
    */
-  static file(dir, result) {
-    const ext = result.page.ext ?? (maybe(path.parse)(result.page.url)?.ext || null);
-    const name = maybe(path.parse)(result.page.url)?.name ?? slugify(result.page.title);
+  static file(root, result) {
+    if (typeof result.page.url === "string") {
+      const { dir: dir2, name: name2, ext: ext2 } = path.parse(result.page.url);
+      return path.normalize(path.format({
+        dir: dir2,
+        name: maybe(name2) ?? "index",
+        ext: maybe(ext2) ?? "html"
+      }));
+    }
+    const ext = result.page.ext ?? ".html";
+    const name = slugify(result.page.title);
+    let dir = path.join(root, name);
+    if (typeof result.page.ext === "string" || name === "index" || // Prevent index/index
+    root.endsWith(name)) dir = root;
     return path.normalize(path.format({
-      dir: ext || name === "index" || dir.endsWith(name) ? dir : path.join(dir, name),
-      name: ext ? name : "index",
-      ext: ext ?? ".html"
+      dir,
+      name: typeof result.page.ext === "string" ? name : "index",
+      ext
     }));
   }
   /**
@@ -68,10 +77,13 @@ var Document = class _Document {
    * - `/about` + `about.xml` => `/about/about.xml`
    */
   static url(file, result) {
-    let url = result.page.url ?? file;
+    if (typeof result.page.url === "string") {
+      if (result.page.url.endsWith(".html")) return result.page.url.replace(/\.html$/, "");
+      return result.page.url;
+    }
     const { ext, dir, name } = path.parse(file);
-    if (ext === ".html") url = path.join(dir, name === "index" ? "/" : name);
-    return url;
+    if (ext === ".html") return path.join(dir, name === "index" ? "/" : name);
+    return file;
   }
   constructor(dir, result) {
     this.#template = result.page.template;
@@ -190,6 +202,12 @@ var date = (label) => (x) => {
   return x;
 };
 
+// src/lib/fn.ts
+var maybe2 = (fn2) => (x) => {
+  if (x === null || x === void 0) return null;
+  return fn2(x);
+};
+
 // src/lib/modules.ts
 import path3 from "path";
 import fsp from "fs/promises";
@@ -232,12 +250,12 @@ var js = async (file) => {
     dependencies: await all(path4.resolve(file))(raw),
     page: {
       title: string("title")(draft.title),
-      description: maybe(string("description"))(draft.description),
-      url: maybe(string("url"))(draft.url),
-      ext: maybe(string("ext"))(draft.ext),
-      created: maybe(truncateDay)(maybe(date("created"))(draft.created)),
-      updated: maybe(truncateDay)(maybe(date("updated"))(draft.updated)),
-      template: maybe(fn("template"))(draft.template),
+      description: maybe2(string("description"))(draft.description),
+      url: maybe2(string("url"))(draft.url),
+      ext: maybe2(string("ext"))(draft.ext),
+      created: maybe2(truncateDay)(maybe2(date("created"))(draft.created)),
+      updated: maybe2(truncateDay)(maybe2(date("updated"))(draft.updated)),
+      template: maybe2(fn("template"))(draft.template),
       body: fn("body")(draft.body)
     }
   };
@@ -251,11 +269,11 @@ var md = async (file) => {
     dependencies: /* @__PURE__ */ new Set(),
     page: {
       title: string("title")(metadata.title),
-      description: maybe(string("description"))(metadata.description),
-      url: maybe(string("url"))(metadata.url),
-      ext: maybe(string("ext"))(metadata.ext),
-      created: maybe(truncateDay)(maybe(fromString)(maybe(string("created"))(metadata.created))),
-      updated: maybe(truncateDay)(maybe(fromString)(maybe(string("updated"))(metadata.updated))),
+      description: maybe2(string("description"))(metadata.description),
+      url: maybe2(string("url"))(metadata.url),
+      ext: maybe2(string("ext"))(metadata.ext),
+      created: maybe2(truncateDay)(maybe2(fromString)(maybe2(string("created"))(metadata.created))),
+      updated: maybe2(truncateDay)(maybe2(fromString)(maybe2(string("updated"))(metadata.updated))),
       template: null,
       body: () => raw.replace(/^-{3,}.+-{3,}(\r?\n)*/gs, "")
     }

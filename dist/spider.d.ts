@@ -41,7 +41,7 @@ export declare class Document {
 	 * - `/about` + `about.html` => `/about/about.html`
 	 * - `/about` + `about.xml` => `/about/about.xml`
 	 */
-	static file(dir: string, result: LoaderResult): string;
+	static file(root: string, result: LoaderResult): string;
 	/**
 	 * Create document url
 	 *
