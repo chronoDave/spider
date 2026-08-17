@@ -1,13 +1,27 @@
 import path from 'path';
 import fsp from 'fs/promises';
+import os from 'os';
 import { createRequire } from 'module';
 import { pathToFileURL } from 'url';
 
-/** Find all static ESM imports */
-export const imports = (root: string) =>
-  (raw: string): string[] => Array.from(raw.matchAll(/import\s+[^'"]+.([^'"]+)['"].*/g))
-    .filter(match => match[1].startsWith('.'))
-    .map(match => path.join(path.dirname(root), match[1]));
+/**
+ * Find all static ESM imports recursively
+ */
+export const imports = async (file: string, results: Set<string>): Promise<Set<string>> => {
+  const raw = await fsp.readFile(file, 'utf-8');
+
+  for (const match of raw.matchAll(/import\s+[^'"]+.([^'"]+)['"].*/g)) {
+    if (!match[1].startsWith('.')) continue;
+
+    const next = path.join(path.dirname(file), match[1]);
+    if (results.has(next)) continue;
+
+    results.add(next);
+    for (const result of await imports(next, results)) results.add(result);
+  }
+
+  return results;
+};
 
 /**
  * Node caches all ESM imports, which makes cache busting
@@ -45,21 +59,16 @@ export const bust = (root: string) =>
     }
   );
 
-export const all = (root: string) =>
-  async (raw: string) => {
-    const stack = imports(root)(raw);
-    const cache = new Set<string>(stack);
+/**
+ * Load module without caching
+ */
+export const load = async (file: string): Promise<Record<string, unknown>> => {
+  const raw = await fsp.readFile(file, 'utf-8');
+  const tmp = path.join(os.tmpdir(), `${crypto.randomUUID()}${path.extname(file)}`);
 
-    while (stack.length > 0) {
-      const file = stack.pop();
-      if (typeof file !== 'string') throw new Error('Empty stack');
+  await fsp.writeFile(tmp, bust(file)(raw));
+  const module = await import(pathToFileURL(tmp).href);
+  await fsp.rm(tmp);
 
-      const raw = await fsp.readFile(file, 'utf-8');
-      for (const result of imports(file)(raw)) {
-        cache.add(result);
-        if (!cache.has(result)) stack.push(result);
-      }
-    }
-
-    return cache;
-  };
+  return module;
+};

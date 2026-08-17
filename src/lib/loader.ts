@@ -1,9 +1,6 @@
 import type { Body, Template } from './document.ts';
 
 import fsp from 'fs/promises';
-import path from 'path';
-import os from 'os';
-import { pathToFileURL } from 'url';
 
 import * as date from './date.ts';
 import * as parse from './parse.ts';
@@ -27,25 +24,25 @@ export type LoaderResult = {
 export type Loader = (file: string) => Promise<LoaderResult>;
 
 export const js: Loader = async file => {
-  const id = crypto.randomUUID();
-  const tmp = path.join(os.tmpdir(), `${id}.ts`);
-  const raw = await fsp.readFile(file, 'utf-8');
-
-  await fsp.writeFile(tmp, modules.bust(file)(raw));
-  const draft = await import(pathToFileURL(tmp).href).then(result => parse.object('default')(result.default));
-  await fsp.rm(tmp);
+  const [
+    module,
+    dependencies
+  ] = await Promise.all([
+    modules.load(file).then(result => parse.object('default')(result.default)),
+    modules.imports(file, new Set())
+  ]);
 
   return {
-    dependencies: await modules.all(path.resolve(file))(raw),
+    dependencies,
     page: {
-      title: parse.string('title')(draft.title),
-      description: maybe(parse.string('description'))(draft.description),
-      url: maybe(parse.string('url'))(draft.url),
-      ext: maybe(parse.string('ext'))(draft.ext),
-      created: maybe(date.truncateDay)(maybe(parse.date('created'))(draft.created)),
-      updated: maybe(date.truncateDay)(maybe(parse.date('updated'))(draft.updated)),
-      template: maybe(parse.fn<Template>('template'))(draft.template),
-      body: parse.fn<Body>('body')(draft.body)
+      title: parse.string('title')(module.title),
+      description: maybe(parse.string('description'))(module.description),
+      url: maybe(parse.string('url'))(module.url),
+      ext: maybe(parse.string('ext'))(module.ext),
+      created: maybe(date.truncateDay)(maybe(parse.date('created'))(module.created)),
+      updated: maybe(date.truncateDay)(maybe(parse.date('updated'))(module.updated)),
+      template: maybe(parse.fn<Template>('template'))(module.template),
+      body: parse.fn<Body>('body')(module.body)
     }
   };
 };

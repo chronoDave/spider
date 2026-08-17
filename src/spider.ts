@@ -57,7 +57,7 @@ export default class Spider {
   readonly #cache: {
     dirty: boolean;
     documents: Map<string, Document>;
-    dependencies: Map<string, Set<string>>;
+    dependencies: Map<string, Set<string>>; // { entry: dependencies[] }
     registry: Registry;
   };
 
@@ -170,31 +170,23 @@ export default class Spider {
     const ac = new AbortController();
     const watcher = fsp.watch(process.cwd(), {
       recursive: true,
-      ignore: this.#outdir ? [this.#outdir, `${this.#outdir}/**/*`] : undefined,
       signal: ac.signal
     });
 
     const task = (async () => {
       try {
         for await (const event of watcher) {
-          if (event.eventType === 'rename' || typeof event.filename !== 'string') continue;
-
-          const file = event.filename;
-
           if (
-            this.#cache.dependencies.has(file) ||
-            (
-              this.#entryPoints.some(glob => path.matchesGlob(file, glob)) &&
-              this.#exclude.every(glob => !path.matchesGlob(file, glob))
-            )
-          ) await this.load(file, true);
+            event.eventType === 'rename' ||
+            typeof event.filename !== 'string'
+          ) continue;
 
-          // Check dependencies
-          const files = this.#cache.dependencies.entries()
-            .filter(([_, dependencies]) => dependencies.has(path.join(process.cwd(), file)));
+          for (const [page, dependencies] of this.#cache.dependencies.entries()) {
+            if (page !== event.filename && !dependencies.has(event.filename)) continue;
 
-          for (const [file] of files) await this.load(file, true);
-          await this.write();
+            await this.load(page, true);
+            await this.write();
+          }
         }
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') return;
@@ -204,6 +196,7 @@ export default class Spider {
 
     return async () => {
       ac.abort();
+
       await task;
     };
   }
