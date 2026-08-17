@@ -1,11 +1,11 @@
 var __defProp = Object.defineProperty;
-var __export = (target, all2) => {
-  for (var name in all2)
-    __defProp(target, name, { get: all2[name], enumerable: true });
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
 };
 
 // src/spider.ts
-import path5 from "path";
+import path4 from "path";
 import fsp3 from "fs/promises";
 
 // src/lib/document.ts
@@ -170,9 +170,6 @@ __export(loader_exports, {
   md: () => md
 });
 import fsp2 from "fs/promises";
-import path4 from "path";
-import os from "os";
-import { pathToFileURL as pathToFileURL2 } from "url";
 
 // src/lib/date.ts
 var truncateDay = (x) => {
@@ -218,9 +215,20 @@ var maybe2 = (fn2) => (x) => {
 // src/lib/modules.ts
 import path3 from "path";
 import fsp from "fs/promises";
+import os from "os";
 import { createRequire } from "module";
 import { pathToFileURL } from "url";
-var imports = (root) => (raw) => Array.from(raw.matchAll(/import\s+[^'"]+.([^'"]+)['"].*/g)).filter((match) => match[1].startsWith(".")).map((match) => path3.join(path3.dirname(root), match[1]));
+var imports = async (file, results) => {
+  const raw = await fsp.readFile(file, "utf-8");
+  for (const match of raw.matchAll(/import\s+[^'"]+.([^'"]+)['"].*/g)) {
+    if (!match[1].startsWith(".")) continue;
+    const next = path3.join(path3.dirname(file), match[1]);
+    if (results.has(next)) continue;
+    results.add(next);
+    for (const result of await imports(next, results)) results.add(result);
+  }
+  return results;
+};
 var bust = (root) => (raw) => raw.replaceAll(
   /(import\s+[^'"]+.)([^'"]+)(['"].*)/g,
   (_, p1, p2, p3) => {
@@ -230,40 +238,35 @@ var bust = (root) => (raw) => raw.replaceAll(
     return `${p1}${absolute}${p3}`;
   }
 );
-var all = (root) => async (raw) => {
-  const stack = imports(root)(raw);
-  const cache = new Set(stack);
-  while (stack.length > 0) {
-    const file = stack.pop();
-    if (typeof file !== "string") throw new Error("Empty stack");
-    const raw2 = await fsp.readFile(file, "utf-8");
-    for (const result of imports(file)(raw2)) {
-      cache.add(result);
-      if (!cache.has(result)) stack.push(result);
-    }
-  }
-  return cache;
+var load = async (file) => {
+  const raw = await fsp.readFile(file, "utf-8");
+  const tmp = path3.join(os.tmpdir(), `${crypto.randomUUID()}${path3.extname(file)}`);
+  await fsp.writeFile(tmp, bust(file)(raw));
+  const module = await import(pathToFileURL(tmp).href);
+  await fsp.rm(tmp);
+  return module;
 };
 
 // src/lib/loader.ts
 var js = async (file) => {
-  const id = crypto.randomUUID();
-  const tmp = path4.join(os.tmpdir(), `${id}.ts`);
-  const raw = await fsp2.readFile(file, "utf-8");
-  await fsp2.writeFile(tmp, bust(file)(raw));
-  const draft = await import(pathToFileURL2(tmp).href).then((result) => object("default")(result.default));
-  await fsp2.rm(tmp);
+  const [
+    module,
+    dependencies
+  ] = await Promise.all([
+    load(file).then((result) => object("default")(result.default)),
+    imports(file, /* @__PURE__ */ new Set())
+  ]);
   return {
-    dependencies: await all(path4.resolve(file))(raw),
+    dependencies,
     page: {
-      title: string("title")(draft.title),
-      description: maybe2(string("description"))(draft.description),
-      url: maybe2(string("url"))(draft.url),
-      ext: maybe2(string("ext"))(draft.ext),
-      created: maybe2(truncateDay)(maybe2(date("created"))(draft.created)),
-      updated: maybe2(truncateDay)(maybe2(date("updated"))(draft.updated)),
-      template: maybe2(fn("template"))(draft.template),
-      body: fn("body")(draft.body)
+      title: string("title")(module.title),
+      description: maybe2(string("description"))(module.description),
+      url: maybe2(string("url"))(module.url),
+      ext: maybe2(string("ext"))(module.ext),
+      created: maybe2(truncateDay)(maybe2(date("created"))(module.created)),
+      updated: maybe2(truncateDay)(maybe2(date("updated"))(module.updated)),
+      template: maybe2(fn("template"))(module.template),
+      body: fn("body")(module.body)
     }
   };
 };
@@ -309,7 +312,7 @@ var Spider = class {
   constructor(options) {
     this.#entryPoints = options.entryPoints;
     this.#exclude = options.exclude ?? [];
-    this.#root = typeof options.root === "string" ? path5.normalize(options.root) : process.cwd();
+    this.#root = typeof options.root === "string" ? path4.normalize(options.root) : process.cwd();
     this.#outdir = options.outdir ?? null;
     this.#loaders = /* @__PURE__ */ new Map();
     this.#loaders.set(".js", js);
@@ -331,8 +334,8 @@ var Spider = class {
    */
   async load(file, force) {
     try {
-      const result = await this.#loaders.get(path5.extname(file))?.(file);
-      if (!result) throw new Error(`Unknown file type "${path5.extname(file)}"`);
+      const result = await this.#loaders.get(path4.extname(file))?.(file);
+      if (!result) throw new Error(`Unknown file type "${path4.extname(file)}"`);
       const document = new Document(relative(this.#root)(file), result);
       if (!force && this.#cache.documents.has(document.page.url)) throw new Error(`Page already exists with url "${document.page.url}"`);
       this.#cache.documents.set(document.page.url, document);
@@ -348,8 +351,8 @@ var Spider = class {
     if (typeof this.#outdir !== "string") return;
     for (const document of this.#cache.documents.values()) {
       try {
-        const file = path5.join(this.#outdir, document.file);
-        await fsp3.mkdir(path5.dirname(file), { recursive: true });
+        const file = path4.join(this.#outdir, document.file);
+        await fsp3.mkdir(path4.dirname(file), { recursive: true });
         await fsp3.writeFile(file, document.render(this.#registry));
       } catch (cause) {
         throw new Error(`Failed to write document "${document.file}"`, { cause });
@@ -383,18 +386,17 @@ var Spider = class {
     const ac = new AbortController();
     const watcher = fsp3.watch(process.cwd(), {
       recursive: true,
-      ignore: this.#outdir ? [this.#outdir, `${this.#outdir}/**/*`] : void 0,
       signal: ac.signal
     });
     const task = (async () => {
       try {
         for await (const event of watcher) {
           if (event.eventType === "rename" || typeof event.filename !== "string") continue;
-          const file = event.filename;
-          if (this.#cache.dependencies.has(file) || this.#entryPoints.some((glob) => path5.matchesGlob(file, glob)) && this.#exclude.every((glob) => !path5.matchesGlob(file, glob))) await this.load(file, true);
-          const files = this.#cache.dependencies.entries().filter(([_, dependencies]) => dependencies.has(path5.join(process.cwd(), file)));
-          for (const [file2] of files) await this.load(file2, true);
-          await this.write();
+          for (const [page, dependencies] of this.#cache.dependencies.entries()) {
+            if (page !== event.filename && !dependencies.has(event.filename)) continue;
+            await this.load(page, true);
+            await this.write();
+          }
         }
       } catch (err2) {
         if (err2 instanceof Error && err2.name === "AbortError") return;
