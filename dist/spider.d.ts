@@ -83,7 +83,7 @@ export type Draft = {
 	created?: Date;
 	updated?: Date;
 	template?: Template;
-	body: Body;
+	body?: Body;
 };
 export type SpiderOptions = {
 	/** Supports [Node globs](https://github.com/isaacs/minimatch#features) */
