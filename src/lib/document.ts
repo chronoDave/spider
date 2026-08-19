@@ -15,7 +15,7 @@ export type Page = {
   readonly url: string;
   readonly created: Date | null;
   readonly updated: Date | null;
-  readonly body: Body;
+  readonly body: Body | null;
 };
 
 export default class Document {
@@ -114,8 +114,8 @@ export default class Document {
     };
   }
 
-  render(registry: Registry) {
-    return this.#template?.(registry)(this.page) ?? this.page.body(registry);
+  render(registry: Registry): string {
+    return this.#template?.(registry)(this.page) ?? this.page.body?.(registry) ?? '';
   }
 }
 

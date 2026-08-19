@@ -17,7 +17,7 @@ export type LoaderResult = {
     created: Date | null;
     updated: Date | null;
     template: Template | null;
-    body: Body;
+    body: Body | null;
   };
 };
 
@@ -42,7 +42,7 @@ export const js: Loader = async file => {
       created: maybe(date.truncateDay)(maybe(parse.date('created'))(module.created)),
       updated: maybe(date.truncateDay)(maybe(parse.date('updated'))(module.updated)),
       template: maybe(parse.fn<Template>('template'))(module.template),
-      body: parse.fn<Body>('body')(module.body)
+      body: maybe(parse.fn<Body>('body'))(module.body)
     }
   };
 };
