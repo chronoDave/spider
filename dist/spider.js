@@ -105,7 +105,7 @@ var Document = class _Document {
     };
   }
   render(registry) {
-    return this.#template?.(registry)(this.page) ?? this.page.body(registry);
+    return this.#template?.(registry)(this.page) ?? this.page.body?.(registry) ?? "";
   }
 };
 
@@ -266,7 +266,7 @@ var js = async (file) => {
       created: maybe2(truncateDay)(maybe2(date("created"))(module.created)),
       updated: maybe2(truncateDay)(maybe2(date("updated"))(module.updated)),
       template: maybe2(fn("template"))(module.template),
-      body: fn("body")(module.body)
+      body: maybe2(fn("body"))(module.body)
     }
   };
 };

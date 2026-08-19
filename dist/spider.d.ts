@@ -22,7 +22,7 @@ export type Page = {
 	readonly url: string;
 	readonly created: Date | null;
 	readonly updated: Date | null;
-	readonly body: Body;
+	readonly body: Body | null;
 };
 export declare class Document {
 	#private;
@@ -69,7 +69,7 @@ export type LoaderResult = {
 		created: Date | null;
 		updated: Date | null;
 		template: Template | null;
-		body: Body;
+		body: Body | null;
 	};
 };
 export type Loader = (file: string) => Promise<LoaderResult>;
