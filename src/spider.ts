@@ -39,7 +39,7 @@ export type Plugin = {
   /** Plugin name */
   name: string;
   /** Called after rendering document. This function is called even if `outdir` is not provided. */
-  write?: (html: string) => string | Promise<string>;
+  write?: (html: string, page?: Page) => string | Promise<string>;
 };
 
 export type SpiderOptions = {
@@ -151,7 +151,7 @@ export default class Spider {
             const next = await acc;
 
             if (!cur.write) return next;
-            return await cur.write(next);
+            return await cur.write(next, document.page);
           } catch (cause) {
             throw new Error(`Failed to call write on plugin "${cur.name}"`, { cause });
           }
