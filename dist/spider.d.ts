@@ -89,7 +89,7 @@ export type Plugin = {
 	/** Plugin name */
 	name: string;
 	/** Called after rendering document. This function is called even if `outdir` is not provided. */
-	write?: (html: string) => string | Promise<string>;
+	write?: (html: string, page?: Page) => string | Promise<string>;
 };
 export type SpiderOptions = {
 	/** Supports [Node globs](https://github.com/isaacs/minimatch#features) */

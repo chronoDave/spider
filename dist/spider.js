@@ -357,7 +357,7 @@ var Spider = class {
           try {
             const next = await acc;
             if (!cur.write) return next;
-            return await cur.write(next);
+            return await cur.write(next, document.page);
           } catch (cause) {
             throw new Error(`Failed to call write on plugin "${cur.name}"`, { cause });
           }
