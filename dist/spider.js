@@ -388,15 +388,19 @@ var Spider = class {
       recursive: true,
       signal: ac.signal
     });
+    const queue = /* @__PURE__ */ new Set();
     const task = (async () => {
       try {
         for await (const event of watcher) {
           if (event.eventType === "rename" || typeof event.filename !== "string") continue;
+          if (queue.has(event.filename)) continue;
+          queue.add(event.filename);
           for (const [page, dependencies] of this.#cache.dependencies.entries()) {
             if (page !== event.filename && !dependencies.has(event.filename)) continue;
             await this.load(page, true);
             await this.write();
           }
+          queue.delete(event.filename);
         }
       } catch (err2) {
         if (err2 instanceof Error && err2.name === "AbortError") return;

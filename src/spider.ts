@@ -172,6 +172,7 @@ export default class Spider {
       recursive: true,
       signal: ac.signal
     });
+    const queue = new Set();
 
     const task = (async () => {
       try {
@@ -181,12 +182,18 @@ export default class Spider {
             typeof event.filename !== 'string'
           ) continue;
 
+          // Do not process files if they're already being processed
+          if (queue.has(event.filename)) continue;
+          queue.add(event.filename);
+
           for (const [page, dependencies] of this.#cache.dependencies.entries()) {
             if (page !== event.filename && !dependencies.has(event.filename)) continue;
 
             await this.load(page, true);
             await this.write();
           }
+
+          queue.delete(event.filename);
         }
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') return;
