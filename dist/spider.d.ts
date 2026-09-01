@@ -119,7 +119,7 @@ declare class Spider {
 	 * @param force If true, overwrites cached entry
 	 */
 	load(file: string, force?: boolean): Promise<Document>;
-	/** Write cached documents to `outdir` if `write` is enabled */
+	/** Render document and write to `outdir` if `outdir` is set */
 	write(): Promise<WriteResult[]>;
 	/** Find all files in `entryPoints`, loads and writes to `outdir` */
 	build(): Promise<{

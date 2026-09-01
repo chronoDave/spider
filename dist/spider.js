@@ -348,7 +348,7 @@ var Spider = class {
       throw new Error(`Failed to load "${file}"`, { cause });
     }
   }
-  /** Write cached documents to `outdir` if `write` is enabled */
+  /** Render document and write to `outdir` if `outdir` is set */
   async write() {
     const results = [];
     for (const document of this.#cache.documents.values()) {
