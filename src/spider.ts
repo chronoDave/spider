@@ -140,7 +140,7 @@ export default class Spider {
     }
   }
 
-  /** Write cached documents to `outdir` if `write` is enabled */
+  /** Render document and write to `outdir` if `outdir` is set */
   async write(): Promise<WriteResult[]> {
     const results: WriteResult[] = [];
 
