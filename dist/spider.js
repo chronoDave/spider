@@ -297,6 +297,7 @@ var Spider = class {
   #root;
   #outdir;
   #loaders;
+  #plugins;
   #cache;
   get #registry() {
     if (!this.#cache.dirty) return this.#cache.registry;
@@ -314,6 +315,7 @@ var Spider = class {
     this.#exclude = options.exclude ?? [];
     this.#root = typeof options.root === "string" ? path4.normalize(options.root) : process.cwd();
     this.#outdir = options.outdir ?? null;
+    this.#plugins = options.plugins ?? [];
     this.#loaders = /* @__PURE__ */ new Map();
     this.#loaders.set(".js", js);
     this.#loaders.set(".ts", js);
@@ -346,25 +348,41 @@ var Spider = class {
       throw new Error(`Failed to load "${file}"`, { cause });
     }
   }
-  /** Write cached documents to `outdir` */
+  /** Write cached documents to `outdir` if `write` is enabled */
   async write() {
-    if (typeof this.#outdir !== "string") return;
+    const results = [];
     for (const document of this.#cache.documents.values()) {
       try {
+        const html = await this.#plugins.reduce(async (acc, cur) => {
+          try {
+            const next = await acc;
+            if (!cur.write) return next;
+            return await cur.write(next);
+          } catch (cause) {
+            throw new Error(`Failed to call write on plugin "${cur.name}"`, { cause });
+          }
+        }, document.render(this.#registry));
+        if (typeof this.#outdir !== "string") {
+          results.push({ file: document.file, html });
+          continue;
+        }
         const file = path4.join(this.#outdir, document.file);
         await fsp3.mkdir(path4.dirname(file), { recursive: true });
-        await fsp3.writeFile(file, document.render(this.#registry));
+        await fsp3.writeFile(file, html);
       } catch (cause) {
         throw new Error(`Failed to write document "${document.file}"`, { cause });
       }
     }
+    return results;
   }
   /** Find all files in `entryPoints`, loads and writes to `outdir` */
   async build() {
     try {
       for await (const file of fsp3.glob(this.#entryPoints, { exclude: this.#exclude })) await this.load(file);
-      await this.write();
-      return this.#cache.documents;
+      return {
+        documents: this.#cache.documents,
+        outputFiles: await this.write()
+      };
     } catch (cause) {
       throw new Error("Failed to build", { cause });
     }

@@ -85,6 +85,12 @@ export type Draft = {
 	template?: Template;
 	body?: Body;
 };
+export type Plugin = {
+	/** Plugin name */
+	name: string;
+	/** Called after rendering document. This function is called even if `outdir` is not provided. */
+	write?: (html: string) => string | Promise<string>;
+};
 export type SpiderOptions = {
 	/** Supports [Node globs](https://github.com/isaacs/minimatch#features) */
 	entryPoints: string[];
@@ -96,6 +102,12 @@ export type SpiderOptions = {
 	root?: string;
 	/** File loaders */
 	loader?: Record<string, Loader>;
+	/** Plugins */
+	plugins?: Plugin[];
+};
+export type WriteResult = {
+	file: string;
+	html: string;
 };
 declare class Spider {
 	#private;
@@ -107,10 +119,13 @@ declare class Spider {
 	 * @param force If true, overwrites cached entry
 	 */
 	load(file: string, force?: boolean): Promise<Document>;
-	/** Write cached documents to `outdir` */
-	write(): Promise<void>;
+	/** Write cached documents to `outdir` if `write` is enabled */
+	write(): Promise<WriteResult[]>;
 	/** Find all files in `entryPoints`, loads and writes to `outdir` */
-	build(): Promise<Map<string, Document>>;
+	build(): Promise<{
+		documents: Map<string, Document>;
+		outputFiles: WriteResult[];
+	}>;
 	/**
 	 * Watch `entryPoints` and dependencies. Calls `build` on file changes.
 	 *
