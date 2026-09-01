@@ -27,8 +27,8 @@ test('[Spider.build]', async (t: TestContext) => {
   });
   const result = await spider.build();
 
-  t.assert.equal(result.size, 7, 'finds all files');
-  t.assert.ok(Object.keys(result).every(url => url.startsWith('/')), 'all paths are root relative');
+  t.assert.equal(result.documents.size, 7, 'finds all files');
+  t.assert.ok(Object.keys(result.documents).every(url => url.startsWith('/')), 'all paths are root relative');
 
   t.assert.ok(fs.existsSync('build/index.html'), 'root');
   t.assert.ok(fs.existsSync('build/blogs/index.html'), 'nested (js)');
@@ -92,4 +92,22 @@ test('[Spider.load]', async t => {
   await cancel();
 
   await fsp.rm('build', { recursive: true, force: true });
+});
+
+test('[Spider.write]', async (t: TestContext) => {
+  const spider = new Spider({
+    entryPoints: ['test/**/*.ts'],
+    exclude: ['**/*.spec.ts', 'test/template/**/*'],
+    root: 'test',
+    plugins: [{
+      name: 'a',
+      write: html => `${html}a`
+    }, {
+      name: 'b',
+      write: html => `${html}b`
+    }]
+  });
+
+  const { outputFiles } = await spider.build();
+  t.assert.ok(outputFiles.every(file => file.html.endsWith('ab')), 'transforms output');
 });

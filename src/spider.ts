@@ -35,6 +35,13 @@ export type Draft = {
   body?: Body;
 };
 
+export type Plugin = {
+  /** Plugin name */
+  name: string;
+  /** Called after rendering document. This function is called even if `outdir` is not provided. */
+  write?: (html: string) => string | Promise<string>;
+};
+
 export type SpiderOptions = {
   /** Supports [Node globs](https://github.com/isaacs/minimatch#features) */
   entryPoints: string[];
@@ -46,6 +53,13 @@ export type SpiderOptions = {
   root?: string;
   /** File loaders */
   loader?: Record<string, Loader>;
+  /** Plugins */
+  plugins?: Plugin[];
+};
+
+export type WriteResult = {
+  file: string;
+  html: string;
 };
 
 export default class Spider {
@@ -54,6 +68,7 @@ export default class Spider {
   readonly #root: string;
   readonly #outdir: string | null;
   readonly #loaders: Map<string, Loader>;
+  readonly #plugins: Plugin[];
   readonly #cache: {
     dirty: boolean;
     documents: Map<string, Document>;
@@ -85,6 +100,7 @@ export default class Spider {
       path.normalize(options.root) :
       process.cwd();
     this.#outdir = options.outdir ?? null;
+    this.#plugins = options.plugins ?? [];
 
     this.#loaders = new Map();
     this.#loaders.set('.js', loader.js);
@@ -124,29 +140,50 @@ export default class Spider {
     }
   }
 
-  /** Write cached documents to `outdir` */
-  async write() {
-    if (typeof this.#outdir !== 'string') return;
+  /** Write cached documents to `outdir` if `write` is enabled */
+  async write(): Promise<WriteResult[]> {
+    const results: WriteResult[] = [];
 
     for (const document of this.#cache.documents.values()) {
       try {
+        const html = await this.#plugins.reduce<string | Promise<string>>(async (acc, cur) => {
+          try {
+            const next = await acc;
+
+            if (!cur.write) return next;
+            return await cur.write(next);
+          } catch (cause) {
+            throw new Error(`Failed to call write on plugin "${cur.name}"`, { cause });
+          }
+        }, document.render(this.#registry));
+
+        if (typeof this.#outdir !== 'string') {
+          results.push({ file: document.file, html });
+
+          continue;
+        }
+
         const file = path.join(this.#outdir, document.file);
 
         await fsp.mkdir(path.dirname(file), { recursive: true });
-        await fsp.writeFile(file, document.render(this.#registry));
+        await fsp.writeFile(file, html);
       } catch (cause) {
         throw new Error(`Failed to write document "${document.file}"`, { cause });
       }
     }
+
+    return results;
   }
 
   /** Find all files in `entryPoints`, loads and writes to `outdir` */
   async build() {
     try {
       for await (const file of fsp.glob(this.#entryPoints, { exclude: this.#exclude })) await this.load(file);
-      await this.write();
 
-      return this.#cache.documents;
+      return {
+        documents: this.#cache.documents,
+        outputFiles: await this.write()
+      };
     } catch (cause) {
       throw new Error('Failed to build', { cause });
     }

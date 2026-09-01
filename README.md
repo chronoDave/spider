@@ -20,9 +20,10 @@
   - [Example](#example)
 - [API](#api)
   - [Registry](#registry)
-  - [Loader](#loader)
   - [URL](#url)
   - [Path](#path)
+  - [Loader](#loader)
+  - [Plugins](#plugins)
 
 ## Features
 
@@ -149,6 +150,38 @@ const page: Draft = {
 export default page;
 ```
 
+### URL
+
+If `url` is not set, `spider` will generate the URL based on directory (relative to root), name and extension
+
+| `dir` | `name` | `ext` | `output` |
+| - | - | - | - |
+| `/` | `index` | - | `/` |
+| `/` | `about` | - | `/about` |
+| `/` | `about` | `.html` | `/about` |
+| `/` | `about` | `.xml` | `/about.xml` |
+| `/about` | `index` | - | `/about/` |
+| `/about` | `me` | - | `/about/me/` |
+| `/about` | `about` | - | `/about/` |
+| `/about` | `about` | `.html` | `/about/about` |
+| `/about` | `about` | `.xml` | `/about/about.xml` |
+
+### Path
+
+If `url` is not set, `spider` will generate the path based on directory (relative to root), name and extension.
+
+| `dir` | `name` | `ext` | `output` |
+| - | - | - | - |
+| `/` | `index` | - | `/index.html` |
+| `/` | `about` | - | `/about/index.html` |
+| `/` | `about` | `.html` | `/about.html` |
+| `/` | `about` | `.xml` | `/about.xml` |
+| `/about` | `index` | - | `/about/index.html` |
+| `/about` | `me` | - | `/about/me/index.html` |
+| `/about` | `about` | - | `/about/index.html` |
+| `/about` | `about` | `.html` | `/about/about.html` |
+| `/about` | `about` | `.xml` | `/about/about.xml` |
+
 ### Loader
 
 Loaders are used to load different file types. By default, `spider` supports loading `.js`, `.ts` and `.md` files. Loaders can be created or overwritten. An example loader for `.txt` files:
@@ -188,34 +221,36 @@ const spider = new Spider({
 spider.build();
 ```
 
-### URL
+### Plugins
 
-If `url` is not set, `spider` will generate the URL based on directory (relative to root), name and extension
+Plugins can be used to transform data throughout the build process.
 
-| `dir` | `name` | `ext` | `output` |
-| - | - | - | - |
-| `/` | `index` | - | `/` |
-| `/` | `about` | - | `/about` |
-| `/` | `about` | `.html` | `/about` |
-| `/` | `about` | `.xml` | `/about.xml` |
-| `/about` | `index` | - | `/about/` |
-| `/about` | `me` | - | `/about/me/` |
-| `/about` | `about` | - | `/about/` |
-| `/about` | `about` | `.html` | `/about/about` |
-| `/about` | `about` | `.xml` | `/about/about.xml` |
+#### `write`
 
-### Path
+`plugin.write` is called after rendering and before writing the output file to disk (if `outdir` is enabled). Plugins are called in order, for example:
 
-If `url` is not set, `spider` will generate the path based on directory (relative to root), name and extension.
+```ts
+import type { Plugin } from '@chronocide/spider';
 
-| `dir` | `name` | `ext` | `output` |
-| - | - | - | - |
-| `/` | `index` | - | `/index.html` |
-| `/` | `about` | - | `/about/index.html` |
-| `/` | `about` | `.html` | `/about.html` |
-| `/` | `about` | `.xml` | `/about.xml` |
-| `/about` | `index` | - | `/about/index.html` |
-| `/about` | `me` | - | `/about/me/index.html` |
-| `/about` | `about` | - | `/about/index.html` |
-| `/about` | `about` | `.html` | `/about/about.html` |
-| `/about` | `about` | `.xml` | `/about/about.xml` |
+import Spider from '@chronocide/spider';
+
+const a: Plugin = {
+  name: 'a',
+  write: html => `${html}a`
+}
+
+const b: Plugin = {
+  name: 'b',
+  write: html => `${html}b`
+}
+
+const spider = new Spider({
+  entryPoints: ['src/**/*.ts'],
+  root: 'src',
+  plugins: [a, b]
+});
+
+const { outputFiles } = await spider.build();
+```
+
+will result in all files ending with `ab`. This can be useful for post-processing HTML, such as calculating and adding file size to the rendered HTML.
