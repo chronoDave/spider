@@ -38,7 +38,7 @@ export type Draft = {
 export type PluginWritePayload = {
   html: string;
   page: Page;
-  path: string;
+  file: string;
 };
 
 export type Plugin = {
@@ -160,7 +160,7 @@ export default class Spider {
             return await cur.write({
               html: next,
               page: document.page,
-              path: document.file
+              file: document.file
             });
           } catch (cause) {
             throw new Error(`Failed to call write on plugin "${cur.name}"`, { cause });
