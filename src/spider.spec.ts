@@ -101,10 +101,10 @@ test('[Spider.write]', async (t: TestContext) => {
     root: 'test',
     plugins: [{
       name: 'a',
-      write: html => `${html}a`
+      write: ({ html }) => `${html}a`
     }, {
       name: 'b',
-      write: html => `${html}b`
+      write: ({ html }) => `${html}b`
     }]
   });
 

@@ -236,12 +236,12 @@ import Spider from '@chronocide/spider';
 
 const a: Plugin = {
   name: 'a',
-  write: html => `${html}a`
+  write: ({ html }) => `${html}a`
 }
 
 const b: Plugin = {
   name: 'b',
-  write: html => `${html}b`
+  write: ({ html }) => `${html}b`
 }
 
 const spider = new Spider({
