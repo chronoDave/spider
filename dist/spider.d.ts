@@ -88,7 +88,7 @@ export type Draft = {
 export type PluginWritePayload = {
 	html: string;
 	page: Page;
-	path: string;
+	file: string;
 };
 export type Plugin = {
 	/** Plugin name */

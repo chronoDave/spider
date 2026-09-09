@@ -360,7 +360,7 @@ var Spider = class {
             return await cur.write({
               html: next,
               page: document.page,
-              path: document.file
+              file: document.file
             });
           } catch (cause) {
             throw new Error(`Failed to call write on plugin "${cur.name}"`, { cause });
