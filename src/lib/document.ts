@@ -1,13 +1,13 @@
-import type Registry from './registry.ts';
 import type { LoaderResult } from './loader.ts';
+import type { Node } from './registry.ts';
 
 import path from 'path/posix';
 
-import * as string from './string.ts';
+import { slugify } from './string.ts';
 
-export type Template = (registry: Registry) => (page: Page) => string;
+export type Template = (registry: Map<string, Node>) => (page: Page) => string;
 
-export type Body = (registry: Registry) => string;
+export type Body = (registry: Map<string, Node>) => string;
 
 export type Page = {
   readonly title: string;
@@ -51,13 +51,13 @@ export default class Document {
 
       return path.normalize(path.format({
         dir,
-        name: string.maybe(name) ?? 'index',
-        ext: string.maybe(ext) ?? 'html'
+        name: name === '' ? 'index' : name,
+        ext: ext === '' ? 'html' : ext
       }));
     }
 
     const ext = result.page.ext ?? '.html';
-    const name = string.slugify(result.page.title);
+    const name = slugify(result.page.title);
 
     let dir = path.join(root, name);
     if (
@@ -114,8 +114,7 @@ export default class Document {
     };
   }
 
-  render(registry: Registry): string {
+  render(registry: Map<string, Node>): string {
     return this.#template?.(registry)(this.page) ?? this.page.body?.(registry) ?? '';
   }
 }
-

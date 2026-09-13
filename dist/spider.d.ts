@@ -1,21 +1,10 @@
-export type Node<T> = {
-	value: T;
-	parent: Node<T> | null;
-	children: Array<Node<T>>;
+export type Node = {
+	parent: Node | null;
+	children: Node[];
+	value: Page;
 };
-export type Tree<T> = {
-	flat: Array<Node<T>>;
-	nested: Array<Node<T>>;
-};
-export declare class Registry {
-	#private;
-	constructor(pages: Page[]);
-	get list(): Node<Page>[];
-	get tree(): Node<Page>[];
-	get(url: string): Node<Page> | null;
-}
-export type Template = (registry: Registry) => (page: Page) => string;
-export type Body = (registry: Registry) => string;
+export type Template = (registry: Map<string, Node>) => (page: Page) => string;
+export type Body = (registry: Map<string, Node>) => string;
 export type Page = {
 	readonly title: string;
 	readonly description: string | null;
@@ -57,7 +46,7 @@ export declare class Document {
 	 */
 	static url(file: string, result: LoaderResult): string;
 	constructor(dir: string, result: LoaderResult);
-	render(registry: Registry): string;
+	render(registry: Map<string, Node>): string;
 }
 export type LoaderResult = {
 	dependencies: Set<string>;
@@ -74,7 +63,6 @@ export type LoaderResult = {
 };
 export type Loader = (file: string) => Promise<LoaderResult>;
 declare const js: Loader;
-declare const md: Loader;
 export type Draft = {
 	title: string;
 	description?: string;
@@ -147,7 +135,7 @@ declare class Spider {
 }
 
 declare namespace loader {
-	export { Loader, LoaderResult, js, md };
+	export { Loader, LoaderResult, js };
 }
 
 export {

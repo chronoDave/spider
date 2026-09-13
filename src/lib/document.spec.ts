@@ -3,7 +3,7 @@ import type { LoaderResult } from './loader.ts';
 import test from 'node:test';
 
 import Document from './document.ts';
-import Registry from './registry.ts';
+import registry from './registry.ts';
 
 const result = (options: { title: string; url?: string; ext?: string }): LoaderResult => ({
   dependencies: new Set(),
@@ -200,8 +200,6 @@ test('[Document.url]', t => {
 });
 
 test('[Document.render]', t => {
-  const registry = new Registry([]);
-
   t.assert.equal(
     new Document('/', {
       dependencies: new Set(),
@@ -215,7 +213,7 @@ test('[Document.render]', t => {
         template: null,
         body: () => 'a'
       }
-    }).render(registry),
+    }).render(registry([])),
     'a',
     'body'
   );
@@ -233,7 +231,7 @@ test('[Document.render]', t => {
         template: () => () => 'b',
         body: () => 'a'
       }
-    }).render(registry),
+    }).render(registry([])),
     'b',
     'template'
   );

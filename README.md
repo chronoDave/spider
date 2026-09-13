@@ -28,14 +28,14 @@
 ## Features
 
 - No dependencies
-- No templating language, uses plain JS/TS
-- Modular loaders, allowing any file type to be used
-  - By default, loads `.ts`, `.js` and `.md` files
-- Flexible API, every page has full access to the whole website allowing for the creation of RSS feeds, collection pages, etc.
-- Sensible defaults
+- No templating language
+  - Uses plain JS/TS
+- Modular file loaders
+  - By default, loads `.js` files. `.ts` is also [supported](https://nodejs.org/learn/typescript/run-natively) if the source code only contains [erasable TypeScript syntax](https://devblogs.microsoft.com/typescript/announcing-typescript-5-8-beta/#the---erasablesyntaxonly-option)
+- Two-step build process
+  - `spider` exposes a registry of all pages which allow the creation of sitemaps, feeds, etc.
+- Automatic URL generation if URL is not provided
   - File URL's are generated based on folder structure and title (`/<folder>/<title>`)
-  - Creation and update dates are truncated to days
-  - Output files are HTML
 
 ## Getting Started
 
@@ -86,7 +86,7 @@ node scripts/build.ts
 
 ### Registry
 
-The registry contains a list (flat and tree) of page nodes. A node contains a page and references to its children. This allows for easy generation of RSS feeds, breadcrumbs and other patterns that require site structure information.
+The registry is a collection of page nodes. A node contains a page, parent and its children. This allows for easy generation of RSS feeds, breadcrumbs and other patterns that require site structure information.
 
 Some examples:
 
@@ -184,7 +184,7 @@ If `url` is not set, `spider` will generate the path based on directory (relativ
 
 ### Loader
 
-Loaders are used to load different file types. By default, `spider` supports loading `.js`, `.ts` and `.md` files. Loaders can be created or overwritten. An example loader for `.txt` files:
+Loaders are used to load different file types. By default, `spider` supports loading `.js` and `.ts` files. Loaders can be created or overwritten. An example loader for `.txt` files:
 
 ```ts
 import type { Loader } from '@chronocide/spider';

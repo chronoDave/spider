@@ -1,14 +1,13 @@
 import type { Loader, LoaderResult } from './lib/loader.ts';
 import type { Template, Body, Page } from './lib/document.ts';
-import type { Node, Tree } from './lib/array.ts';
+import type { Node } from './lib/registry.ts';
 
 import path from 'path';
 import fsp from 'fs/promises';
 
 import Document from './lib/document.ts';
-import Registry from './lib/registry.ts';
+import registry from './lib/registry.ts';
 import { relative } from './lib/url.ts';
-import { count } from './lib/string.ts';
 import * as loader from './lib/loader.ts';
 
 export type {
@@ -18,11 +17,10 @@ export type {
   Template,
   Body,
   Page,
-  Node,
-  Tree
+  Node
 };
 
-export { Registry, loader };
+export { loader };
 
 export type Draft = {
   title: string;
@@ -79,21 +77,16 @@ export default class Spider {
     dirty: boolean;
     documents: Map<string, Document>;
     dependencies: Map<string, Set<string>>; // { entry: dependencies[] }
-    registry: Registry;
+    registry: Map<string, Node>;
   };
 
-  get #registry(): Registry {
+  get #registry(): Map<string, Node> {
     if (!this.#cache.dirty) return this.#cache.registry;
 
-    const depth = count('/');
-    const pages = Array.from(this.#cache.documents.values())
-      .map(document => document.page)
-      .sort((a, b) => {
-        if (depth(a.url) === depth(b.url)) return a.url.localeCompare(b.url);
-        return depth(a.url) - depth(b.url);
-      });
+    const pages: Page[] = [];
+    for (const document of this.#cache.documents.values()) pages.push(document.page);
 
-    this.#cache.registry = new Registry(pages);
+    this.#cache.registry = registry(pages);
     this.#cache.dirty = false;
 
     return this.#cache.registry;
@@ -111,12 +104,11 @@ export default class Spider {
     this.#loaders = new Map();
     this.#loaders.set('.js', loader.js);
     this.#loaders.set('.ts', loader.js);
-    this.#loaders.set('.md', loader.md);
     if (options.loader) Object.entries(options.loader).forEach(([ext, loader]) => this.#loaders.set(ext, loader));
 
     this.#cache = {
       documents: new Map(),
-      registry: new Registry([]),
+      registry: registry([]),
       dependencies: new Map(),
       dirty: false
     };

@@ -20,20 +20,19 @@ test('[Spider.load]', async t => {
 
 test('[Spider.build]', async (t: TestContext) => {
   const spider = new Spider({
-    entryPoints: ['test/**/*.ts', 'test/**/*.md'],
+    entryPoints: ['test/**/*.ts'],
     exclude: ['**/*.spec.ts', 'test/template/**/*'],
     root: 'test',
     outdir: 'build'
   });
   const result = await spider.build();
 
-  t.assert.equal(result.documents.size, 7, 'finds all files');
+  t.assert.equal(result.documents.size, 5, 'finds all files');
   t.assert.ok(Object.keys(result.documents).every(url => url.startsWith('/')), 'all paths are root relative');
 
   t.assert.ok(fs.existsSync('build/index.html'), 'root');
   t.assert.ok(fs.existsSync('build/blogs/index.html'), 'nested (js)');
   t.assert.ok(fs.existsSync('build/blogs.xml'), 'url (xml)');
-  t.assert.ok(fs.existsSync('build/blogs/blog-a/index.html'), 'nested (md)');
   t.assert.ok(fs.existsSync('build/about.html'), 'url (html)');
   t.assert.ok(fs.existsSync('build/about.xml'), 'url (xml)');
 
@@ -44,7 +43,7 @@ test('[Spider.build]', async (t: TestContext) => {
 
 test('[Spider.load]', async t => {
   const spider = new Spider({
-    entryPoints: ['test/**/*.ts', 'test/**/*.md'],
+    entryPoints: ['test/**/*.ts'],
     exclude: ['**/*.spec.ts', 'test/template/**/*'],
     root: 'test',
     outdir: 'build'
@@ -52,22 +51,22 @@ test('[Spider.load]', async t => {
   const cancel = await spider.watch();
 
   await t.test('direct', async () => {
-    const original = await fsp.readFile('test/blogs/a.md', 'utf-8');
-    const a = await fsp.readFile('build/blogs/blog-a/index.html', 'utf-8');
+    const original = await fsp.readFile('test/about.ts', 'utf-8');
+    const a = await fsp.readFile('build/about.html', 'utf-8');
 
     try {
-      await fsp.writeFile('test/blogs/a.md', `${original}\n`);
+      await fsp.writeFile('test/about.ts', original.replaceAll('About', 'Me'));
       await new Promise(resolve => setTimeout(resolve, 100));
-      const b = await fsp.readFile('build/blogs/blog-a/index.html', 'utf-8');
+      const b = await fsp.readFile('build/about.html', 'utf-8');
 
       t.assert.notEqual(a.length, b.length);
     } catch (err) {
-      await fsp.writeFile('test/blogs/a.md', original);
+      await fsp.writeFile('test/about.ts', original);
 
       throw err;
     }
 
-    await fsp.writeFile('test/blogs/a.md', original);
+    await fsp.writeFile('test/about.ts', original);
   });
 
   await t.test('dependency', async () => {

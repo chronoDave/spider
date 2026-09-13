@@ -1,52 +1,38 @@
 import type { Page } from './document.ts';
-import type { Tree, Node } from './array.ts';
 
-import * as array from './array.ts';
+import path from 'path';
 
-export default class Registry {
-  readonly #map: Map<string, Node<Page>>;
-  readonly #tree: Tree<Page>;
+export type Node = {
+  parent: Node | null;
+  children: Node[];
+  value: Page;
+};
 
-  constructor(pages: Page[]) {
-    this.#tree = array.tree(pages)((page, tree) => {
-      let current = null as Node<Page> | null;
+export default (pages: Page[]): Map<string, Node> => pages
+  .sort((a, b) => {
+    const depth = (x: string) => x.split('/').length;
 
-      /**
-       * / => []
-       * /a/ => ['a']
-       * /a/b/ => ['a', 'b']
-       * /a/b/c/ => ['a', 'b', 'c']
-       */
-      const dirs = page.url.split('/').filter(Boolean);
+    if (depth(a.url) === depth(b.url)) return a.url.localeCompare(b.url);
+    return depth(a.url) - depth(b.url);
+  })
+  .reduce((acc, cur) => {
+    if (cur.url === '/') {
+      const node: Node = { parent: null, children: [], value: cur };
+      acc.set(cur.url, node);
 
-      /**
-       * [] => null
-       * ['a'] => '/'
-       * ['a', 'b'] => '/a'
-       * ['a', 'b', 'c'] => '/a/b'
-       */
-      for (let i = 0; i < dirs.length; i += 1) {
-        const url = i === 0 ? '/' : `/${dirs.slice(0, i).join('/')}/`;
-        const parent = (current?.children ?? tree).find(node => node.value.url === url) ?? null;
+      return acc;
+    }
 
-        if (parent) current = parent;
-      }
+    const { dir } = path.parse(cur.url);
+    let key = dir;
+    if (dir !== '/') key += '/';
 
-      return current;
-    });
+    const parent = acc.get(key);
+    if (!parent) throw new Error(`Found unattached page "${cur.url}"`);
 
-    this.#map = new Map(this.#tree.flat.map(node => [node.value.url, node]));
-  }
+    const node: Node = { parent, children: [], value: cur };
+    parent.children.push(node);
+    acc.set(cur.url, node);
 
-  get list() {
-    return this.#tree.flat;
-  }
-
-  get tree() {
-    return this.#tree.nested;
-  }
-
-  get(url: string): Node<Page> | null {
-    return this.#map.get(url) ?? null;
-  }
-}
+    return acc;
+  }, new Map<string, Node>());
