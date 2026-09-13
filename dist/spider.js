@@ -161,26 +161,20 @@ var date = (label) => (x) => {
   return x;
 };
 
-// src/lib/fn.ts
-var maybe = (fn2) => (x) => {
-  if (x === null || x === void 0) return null;
-  return fn2(x);
-};
-
 // src/lib/esm.ts
 import path4 from "path";
 import fsp from "fs/promises";
 import os from "os";
 import { createRequire } from "module";
 import { pathToFileURL } from "url";
-var imports = async (file, results) => {
+var imports = (results) => async (file) => {
   const raw = await fsp.readFile(file, "utf-8");
   for (const match of raw.matchAll(/import\s+[^'"]+.([^'"]+)['"].*/g)) {
     if (!match[1].startsWith(".")) continue;
     const next = path4.join(path4.dirname(file), match[1]);
     if (results.has(next)) continue;
     results.add(next);
-    for (const result of await imports(next, results)) results.add(result);
+    for (const result of await imports(results)(next)) results.add(result);
   }
   return results;
 };
@@ -201,6 +195,12 @@ var load = async (file) => {
   return module;
 };
 
+// src/lib/fn.ts
+var maybe = (fn2) => (x) => {
+  if (x === null || x === void 0) return null;
+  return fn2(x);
+};
+
 // src/lib/loader.ts
 var js = async (file) => {
   const [
@@ -208,7 +208,7 @@ var js = async (file) => {
     dependencies
   ] = await Promise.all([
     load(file).then((result) => object("default")(result.default)),
-    imports(file, /* @__PURE__ */ new Set())
+    imports(/* @__PURE__ */ new Set())(file)
   ]);
   return {
     dependencies,
