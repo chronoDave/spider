@@ -131,6 +131,21 @@ var relative = (a) => (b) => {
   return `/${rel.length === 0 ? rel : path3.dirname(rel)}`;
 };
 
+// src/lib/fn.ts
+var maybe = (fn2) => (x) => {
+  if (x === null || x === void 0) return null;
+  return fn2(x);
+};
+var debounce = (n) => (fn2) => {
+  let id;
+  return async (x) => new Promise((resolve) => {
+    clearTimeout(id);
+    id = setTimeout(() => {
+      fn2(x).then(resolve);
+    }, n);
+  });
+};
+
 // src/lib/loader.ts
 var loader_exports = {};
 __export(loader_exports, {
@@ -193,12 +208,6 @@ var load = async (file) => {
   const module = await import(pathToFileURL(tmp).href);
   await fsp.rm(tmp);
   return module;
-};
-
-// src/lib/fn.ts
-var maybe = (fn2) => (x) => {
-  if (x === null || x === void 0) return null;
-  return fn2(x);
 };
 
 // src/lib/loader.ts
@@ -333,27 +342,28 @@ var Spider = class {
    * increase memory usage. It is not recommended to run `watch` for extended periods of time.
    *
    * @see https://nodejs.org/api/fs.html#caveats
+   *
+   * @param n Event debounce rate, default `100`
    */
-  async watch() {
+  async watch(n) {
     await this.build();
     const ac = new AbortController();
     const watcher = fsp2.watch(process.cwd(), {
       recursive: true,
       signal: ac.signal
     });
-    const queue = /* @__PURE__ */ new Set();
+    const rebuild = debounce(n ?? 100)(async (file) => {
+      for (const [page, dependencies] of this.#cache.dependencies.entries()) {
+        if (page !== file && !dependencies.has(file)) continue;
+        await this.load(page, true);
+        await this.write();
+      }
+    });
     const task = (async () => {
       try {
         for await (const event of watcher) {
           if (event.eventType === "rename" || typeof event.filename !== "string") continue;
-          if (queue.has(event.filename)) continue;
-          queue.add(event.filename);
-          for (const [page, dependencies] of this.#cache.dependencies.entries()) {
-            if (page !== event.filename && !dependencies.has(event.filename)) continue;
-            await this.load(page, true);
-            await this.write();
-          }
-          queue.delete(event.filename);
+          rebuild(event.filename);
         }
       } catch (err2) {
         if (err2 instanceof Error && err2.name === "AbortError") return;

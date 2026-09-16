@@ -130,8 +130,10 @@ declare class Spider {
 	 * increase memory usage. It is not recommended to run `watch` for extended periods of time.
 	 *
 	 * @see https://nodejs.org/api/fs.html#caveats
+	 *
+	 * @param n Event debounce rate, default `100`
 	 */
-	watch(): Promise<() => Promise<void>>;
+	watch(n?: number): Promise<() => Promise<void>>;
 }
 
 declare namespace loader {
