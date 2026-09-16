@@ -18,12 +18,17 @@
 - [Getting Started](#getting-started)
   - [Installation](#installation)
   - [Example](#example)
-- [API](#api)
+- [Concepts](#concepts)
   - [Registry](#registry)
   - [URL](#url)
   - [Path](#path)
   - [Loader](#loader)
   - [Plugins](#plugins)
+- [API](#api)
+  - [`load`](#load)
+  - [`write`](#write)
+  - [`build`](#build)
+  - [`watch`](#watch)
 
 ## Features
 
@@ -82,7 +87,7 @@ Running the build script creates `build/about/index.html`:
 node scripts/build.ts
 ```
 
-## API
+## Concepts
 
 ### Registry
 
@@ -254,3 +259,56 @@ const { outputFiles } = await spider.build();
 ```
 
 will result in all files ending with `ab`. This can be useful for post-processing HTML, such as calculating and adding file size to the rendered HTML.
+
+## API
+
+### `load`
+
+Load input file, used internally by `build` and `watch`. If `force` is set, will override internal cache.
+
+```ts
+import Spider from '@chronocide/spider';
+
+const spider = new Spider({ entryPoints: [] });
+await spider.load('src/index.ts');
+```
+
+### `write`
+
+Render document and write to `outdir` if `outdir` is set.
+
+```ts
+import Spider from '@chronocide/spider';
+
+const spider = new Spider({ entryPoints: [] });
+await spider.load('src/index.ts');
+await spider.write();
+```
+
+### `build`
+
+Find all files in `entryPoints`, loads and writes to `outdir`.
+
+```ts
+import Spider from '@chronocide/spider';
+
+const spider = new Spider({ entryPoints: ['src/pages/**/*.ts'] });
+await spider.build();
+```
+
+### `watch`
+
+Watch `entryPoints` and dependencies. Calls `build` on file changes.
+
+**Note**: Files that exist outside the working directly do not trigger a ild.
+
+**Note**: Some systems may send duplicate events.
+
+**Note**: Due to Node's [limitations](https://github.com/nodejs/node/issues/49442#issuecomment-1894620232), every file change will increase memory usage. It is not recommended to run `watch` for extended periods of time.
+
+```ts
+import Spider from '@chronocide/spider';
+
+const spider = new Spider({ entryPoints: ['src/pages/**/*.ts'] });
+await spider.watch();
+```

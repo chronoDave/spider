@@ -8,6 +8,7 @@ import fsp from 'fs/promises';
 import Document from './lib/document.ts';
 import registry from './lib/registry.ts';
 import { relative } from './lib/url.ts';
+import { debounce } from './lib/fn.ts';
 import * as loader from './lib/loader.ts';
 
 export type {
@@ -202,8 +203,10 @@ export default class Spider {
    * increase memory usage. It is not recommended to run `watch` for extended periods of time.
    *
    * @see https://nodejs.org/api/fs.html#caveats
+   *
+   * @param n Event debounce rate, default `100`
    */
-  async watch() {
+  async watch(n?: number) {
     await this.build();
 
     const ac = new AbortController();
@@ -211,7 +214,15 @@ export default class Spider {
       recursive: true,
       signal: ac.signal
     });
-    const queue = new Set();
+
+    const rebuild = debounce(n ?? 100)(async (file: string) => {
+      for (const [page, dependencies] of this.#cache.dependencies.entries()) {
+        if (page !== file && !dependencies.has(file)) continue;
+
+        await this.load(page, true);
+        await this.write();
+      }
+    });
 
     const task = (async () => {
       try {
@@ -221,18 +232,7 @@ export default class Spider {
             typeof event.filename !== 'string'
           ) continue;
 
-          // Do not process files if they're already being processed
-          if (queue.has(event.filename)) continue;
-          queue.add(event.filename);
-
-          for (const [page, dependencies] of this.#cache.dependencies.entries()) {
-            if (page !== event.filename && !dependencies.has(event.filename)) continue;
-
-            await this.load(page, true);
-            await this.write();
-          }
-
-          queue.delete(event.filename);
+          rebuild(event.filename);
         }
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') return;

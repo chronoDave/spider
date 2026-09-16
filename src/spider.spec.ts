@@ -56,7 +56,7 @@ test('[Spider.load]', async t => {
 
     try {
       await fsp.writeFile('test/about.ts', original.replaceAll('About', 'Me'));
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
       const b = await fsp.readFile('build/about.html', 'utf-8');
 
       t.assert.notEqual(a.length, b.length);
@@ -75,7 +75,7 @@ test('[Spider.load]', async t => {
 
     try {
       await fsp.writeFile('test/template/root.ts', original.replace(/return.+;/, 'return "";'));
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
       const b = await fsp.readFile('build/index.html', 'utf-8');
 
       t.assert.notEqual(a.length, b.length);
